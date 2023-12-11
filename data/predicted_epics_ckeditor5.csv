@@ -1,0 +1,603 @@
+Cluster,Epic Title,Epic Body,Epic Labels,Task Section
+6," Epic Issue: Software Project Management Improvement
+"," This epic issue aims to address multiple software project management improvements identified through various issues. The improvements include enabling copy & paste in restricted editing mode, resolving conflicts with document lists plugin, enabling dropping between widgets, implementing scroll while dragging, preserving updated data during drag & drop, and ensuring test coverage for the experimental drag and drop feature. These improvements will enhance the overall usability, functionality, and stability of the software project management system.
+"," ['type:epic', 'squad:core']","- [ ] [There should be an empty paragraph in the newly created editor](https://github.com/ckeditor/ckeditor5/issues/331)
+
+- [ ] [Enable copy & paste in restricted editing mode](https://github.com/ckeditor/ckeditor5/issues/5802)
+
+- [ ] [Document lists plugin not allow to-do lists?](https://github.com/ckeditor/ckeditor5/issues/11620)
+
+- [ ] [Cannot drop between widgets](https://github.com/ckeditor/ckeditor5/issues/12894)
+
+- [ ] [[Drag & drop] Scroll while dragging](https://github.com/ckeditor/ckeditor5/issues/14647)
+
+- [ ] [[Drag & drop + RTC] Should we paste data that was updated while dragging?](https://github.com/ckeditor/ckeditor5/issues/14737)
+
+- [ ] [[Drag and drop] Test coverage](https://github.com/ckeditor/ckeditor5/issues/14831)
+"
+1," Epic Issue: TypeScript Typings and List Styles Improvements
+
+"," This epic issue aims to address two areas of improvement in the software project.
+
+1. TypeScript Typings: The request for typings definition for ckeditor5 in TypeScript has been raised. The migration to TypeScript is already in progress, with an alpha release of version 37 including typings already out. The goal is to have official typings generated based on the JS files. The progress of the migration and updates on integration with Vue, React, and Angular can be followed in the issue: https://github.com/ckeditor/ckeditor5/issues/11704.
+
+2. List Styles Improvement: There have been requests to improve the list styles feature. Currently, the options for list styles are limited. The proposed improvement includes supporting different styles for ordered lists, such as roman numerals or alphabetical order. It is suggested to implement a cycle through the styles on click of the icon, with an option for ""none"" style as well. The issue also discusses the missing semantic of order direction and the ""start"" attribute consideration. The issue can be found here: https://github.com/ckeditor/ckeditor5/issues/1028.
+
+<TITLE> Epic Issue: TypeScript Typings and List Styles Improvements
+", ['type:epic'],"- [ ] [Typings for TypeScript](https://github.com/ckeditor/ckeditor5/issues/504)
+
+- [ ] [Feature Request: Cycle Through List Styles on Click](https://github.com/ckeditor/ckeditor5/issues/1028)
+
+- [ ] [Implement list styles](https://github.com/ckeditor/ckeditor5/issues/1031)
+
+- [ ] [Ensure that multi-range selections are handled in deleteContent(), insertContent() and modifySelection()](https://github.com/ckeditor/ckeditor5/issues/6328)
+
+- [ ] [Add ""select entire column"" and ""select entire row"" options in the row/col dropdowns](https://github.com/ckeditor/ckeditor5/issues/6500)
+
+- [ ] [[Experimental] Drag and Drop of blocks](https://github.com/ckeditor/ckeditor5/issues/14033)
+
+- [ ] [Image size attributes after uploading image](https://github.com/ckeditor/ckeditor5/issues/14531)
+
+- [ ] [[Drag & drop] Creation of subitems in the lists](https://github.com/ckeditor/ckeditor5/issues/14766)
+"
+23," Epic Issue: Table Feature Implementation
+"," Implementing the table feature is a critical task that needs to be addressed promptly. This epic issue aims to provide a comprehensive solution and ensure the seamless integration of the table feature within the software. The exact details and requirements of the table feature are not yet available, but this epic will serve as a high-level roadmap and container for all related issues.
+"," ['type:epic', 'domain:accessibility']","- [ ] [Table feature](https://github.com/ckeditor/ckeditor5/issues/610)
+"
+16," Styles Feature Epic Issue
+"," This epic issue encompasses various issues related to the Styles feature in software project management. The issues include problems with the current user experience, such as confusion in the grid of styles, bloated lists of styles, and difficulties in navigating through them. Proposed solutions involve renaming elements, hiding or collapsing inactive styles, providing search functionality, and organizing styles as a tree. The aim of this epic issue is to improve the user experience and provide more efficient and effective solutions for managing styles in software projects.
+"," ['type:epic', 'domain:ui/ux', 'status:discussion']","- [ ] [Style feature](https://github.com/ckeditor/ckeditor5/issues/648)
+
+- [ ] [[Style dropdown] Confusing UX in the grid of styles](https://github.com/ckeditor/ckeditor5/issues/11579)
+"
+10, Epic: Improve CKEditor 5 Image Feature Compatibility ," This epic aims to improve the image feature in CKEditor 5 to be more compatible with CKEditor 4. The main focus is on supporting the height attribute for inline images. 
+
+<TITLE> [Task] Preserve image height and width on content load "," ['type:task', 'package:core', 'domain:compatibility']
+
+<TITLE> [Task] Set image height and width proactively ","- [ ] [[Proposal] Provide TS type checking based on JSDoc annotations](https://github.com/ckeditor/ckeditor5/issues/1415)
+
+- [ ] [Add support for content drag&drop](https://github.com/ckeditor/ckeditor5/issues/2664)
+
+- [ ] [Table mouse selection UI/UX](https://github.com/ckeditor/ckeditor5/issues/6114)
+
+- [ ] [Table cell/row/column selection – stage II](https://github.com/ckeditor/ckeditor5/issues/6285)
+
+- [ ] [[Table] Crash when undoing row insertion and adding cell properties](https://github.com/ckeditor/ckeditor5/issues/6382)
+
+- [ ] [[Table] Crash when removing row after horizontal split](https://github.com/ckeditor/ckeditor5/issues/6401)
+
+- [ ] [Multiselection breaks in tables while holding Shift key](https://github.com/ckeditor/ckeditor5/issues/6453)
+
+- [ ] [Research feasibility of Command#affectsContent](https://github.com/ckeditor/ckeditor5/issues/10493)
+
+- [ ] [Make existing dropdowns initialize their panel content on first open](https://github.com/ckeditor/ckeditor5/issues/12890)
+
+- [ ] [🖼️  Supporting image height attribute](https://github.com/ckeditor/ckeditor5/issues/14146)
+"
+21, Software Project Management Epic: Improve Software Modularity and Dependencies ," This epic aims to improve the modularity and dependencies of the software project by addressing several specific issues. By resolving these issues, we can enhance the overall architecture and maintainability of the software. The issues to be addressed in this epic include:
+
+1. Conversion from simple model to complex view (slot conversion)
+
+2. Problems with the <table> abstraction in the model
+
+3. Use format* beforeInput types across the features
+
+4. Research how to make import and re-export cleaner
+
+5. Move EditorUI to ckeditor5-ui
+
+This epic will involve analyzing the current state of the software, making necessary code changes, updating documentation, and providing migration guides. The goal is to create a more modular and maintainable software project.
+
+"," ['type:epic', 'status:open', 'squad:core']","- [ ] [Conversion from simple model to complex view (slot conversion)](https://github.com/ckeditor/ckeditor5/issues/1589)
+
+- [ ] [Problems with the <table> abstraction in the model](https://github.com/ckeditor/ckeditor5/issues/6506)
+
+- [ ] [Use format* beforeInput types across the features](https://github.com/ckeditor/ckeditor5/issues/8000)
+
+- [ ] [[TS] Research how to make import and re-export cleaner](https://github.com/ckeditor/ckeditor5/issues/12720)
+
+- [ ] [Move EditorUI to ckeditor5-ui](https://github.com/ckeditor/ckeditor5/issues/12853)
+"
+22," Epic Issue: Improve CKEditor5 Navigation, Table Selection, UI Performance, and Bug Fixes
+"," This epic issue aims to address multiple improvements and bug fixes for CKEditor5. It includes the following tasks:
+
+1. Implement a custom navigation through tables:
+    - Improve the navigation experience for tables by designing and implementing a custom solution.
+    - Labels: ['type:improvement', 'type:feature', 'package:table']
+    - Issue Number: 3267
+
+2. Validate table selection POC approach:
+    - Finish the basic table selection concept and plugin.
+    - Create an integration branch for the feature (with the possibility of merging to `master`).
+    - Integrate the engine part if it does not cause any issues.
+    - Labels: ['type:task', 'package:engine', 'package:table']
+    - Issue Number: 6113
+
+3. Deploy monorepo changes:
+    - Final step in the migration process, ensuring all work is deployed correctly.
+    - Verify the changes on a clone of the ckeditor5 repository.
+    - Create deployment instructions to be followed.
+    - Labels: ['type:task']
+    - Issue Number: 6534
+
+4. Test and stabilize composition (IME) using beforeInput on Android:
+    - Test composition using the default Android web browser and popular keyboards.
+    - Ensure stability and functionality for IME (input method editor).
+    - Labels: ['resolution:duplicate', 'type:task', 'package:typing', 'domain:ui/ux', 'domain:typing/ime', 'domain:mobile', 'squad:core']
+    - Issue Number: 8011
+
+5. Test and stabilize composition (IME) using beforeInput on iOS:
+    - Test composition using the default keyboard and mobile Safari scenario on iOS.
+    - Confirm stability and functionality for IME.
+    - Labels: ['resolution:duplicate', 'type:task', 'package:typing', 'domain:ui/ux', 'domain:typing/ime', 'domain:mobile', 'squad:core']
+    - Issue Number: 8012
+
+6. [Conversion] Write down a summary of changes:
+    - Summarize the changes introduced in issue #10294, focusing on the ""whys"" and ""whats"".
+    - Create a developer-oriented blog post-like summary.
+    - Compile smaller thoughts into topics and limit the content to what matters most.
+    - Labels: ['type:task', 'type:docs', 'package:engine', 'squad:core', 'release:blocker']
+    - Issue Number: 11268
+
+7. [Style dropdown] Refactor the command:
+    - Clean up after the rapid development of the style dropdown feature.
+    - Allocate ~20% of the time to improve the test suite for the feature.
+    - Labels: ['type:task', 'squad:core', 'package:style']
+    - Issue Number: 11607
+
+8. [UI initialization performance] Research how the UI is initialized:
+    - Investigate the initialization flow of the UI and identify time-consuming steps.
+    - Address performance issues related to UI initialization.
+    - Part of issue #12592.
+    - Labels: ['package:ui', 'type:performance', 'squad:core']
+    - Issue Number: 12682
+
+9. Drag by balloon block toolbar improvements:
+    - Enhance the logic and implementation of the drag behavior by balloon block toolbar introduced in issue #13933.
+    - Improve the element checking range for better integration compatibility.
+    - Labels: ['type:improvement', 'package:clipboard', 'squad:core']
+    - Issue Number: 15058
+
+10. Replace the existing stale bot with the new one:
+    - Replace the existing stale bot with a new one.
+    - Create a daily task on CI for the new bot.
+    - Part of ckeditor/ckeditor5#15399.
+    - Labels: ['type:task', 'squad:devops', 'package:dev']
+    - Issue Number: 15403
+    
+",": Epic, Improvement, Bug Fix, Performance, Navigation, Table, UI, Testing, Documentation, Integration, Mobile, Typing, Conversion, Style, DevOps.
+","- [ ] [Implement a custom navigation through tables](https://github.com/ckeditor/ckeditor5/issues/3267)
+
+- [ ] [Validate table selection POC approach.](https://github.com/ckeditor/ckeditor5/issues/6113)
+
+- [ ] [Deploy monorepo changes](https://github.com/ckeditor/ckeditor5/issues/6534)
+
+- [ ] [Test and stabilize composition (IME) using beforeInput on Android](https://github.com/ckeditor/ckeditor5/issues/8011)
+
+- [ ] [Test and stabilize composition (IME) using beforeInput on iOS](https://github.com/ckeditor/ckeditor5/issues/8012)
+
+- [ ] [[Conversion] Write down a summary of changes](https://github.com/ckeditor/ckeditor5/issues/11268)
+
+- [ ] [[Style dropdown] Refactor the command](https://github.com/ckeditor/ckeditor5/issues/11607)
+
+- [ ] [[UI initialization performance] Research how the UI is initialized (the flow) and which steps take significant amount of time](https://github.com/ckeditor/ckeditor5/issues/12682)
+
+- [ ] [Drag by balloon block toolbar improvements](https://github.com/ckeditor/ckeditor5/issues/15058)
+
+- [ ] [Replace the existing stale bot with the new one](https://github.com/ckeditor/ckeditor5/issues/15403)
+"
+24," Epic Issue: Alignment Dropdown and Table Selection Improvements
+"," This epic issue aims to address several issues related to the alignment dropdown and table selection in CKEditor.
+"," ['type:epic', 'squad:core']","- [ ] [The alignment dropdown has unnecessary scrollbars](https://github.com/ckeditor/ckeditor5/issues/3416)
+
+- [ ] [Multiple cell selection does not get along with enter](https://github.com/ckeditor/ckeditor5/issues/6301)
+
+- [ ] [Table Shift+Click selection UX](https://github.com/ckeditor/ckeditor5/issues/6330)
+
+- [ ] [Multiple cell selection should not fail when mouse is over a widget](https://github.com/ckeditor/ckeditor5/issues/6348)
+
+- [ ] [Table MouseSelectionHandler should reset its #isSelecting flag on mouseup](https://github.com/ckeditor/ckeditor5/issues/6353)
+
+- [ ] [The live preview of the table cell background should work with multiple-cell selection](https://github.com/ckeditor/ckeditor5/issues/6446)
+
+- [ ] [[TS] Add editingDowncast and dataDowncast in conversion.for](https://github.com/ckeditor/ckeditor5/issues/13750)
+
+- [ ] [[Drag & drop, intro] Blockquote formatting is lost](https://github.com/ckeditor/ckeditor5/issues/14640)
+
+- [ ] [[Drag & drop] Can't place the content in the code block](https://github.com/ckeditor/ckeditor5/issues/14641)
+
+- [ ] [[Drag & drop, intro] Can't take out the text out of the image/table caption](https://github.com/ckeditor/ckeditor5/issues/14643)
+
+- [ ] [[Drag & drop] Hide contextual balloon toolbar while dragging](https://github.com/ckeditor/ckeditor5/issues/14711)
+
+- [ ] [[Drag & drop + Balloon block, intro] Select the blocks when dragging with the drag handle](https://github.com/ckeditor/ckeditor5/issues/14712)
+
+- [ ] [[Drag & drop + Balloon block]  Misplaced toolbar after movement](https://github.com/ckeditor/ckeditor5/issues/14735)
+
+- [ ] [[Drag & Drop] Preview logic requires tweaking.  ](https://github.com/ckeditor/ckeditor5/issues/14968)
+"
+9," Epic Issue: Enhancements and Fixes for CKEditor 5
+
+"," This epic issue aims to address several enhancements and fixes for CKEditor 5. It includes the following tasks:
+
+- Merge CKEditor 5 subrepositories to the main repository
+- Adjust the CI to work with monorepo
+- Style command should check if the classes overlap with other active styles while removing
+- Merge the ""number"" type into PriorityString
+- Add linter rules for enforcing imports of module augmentation and no explicit return type
+- Allow and preserve image width and height attributes
+- On image upload set the width and height attributes
+- Research setting aspect-ratio
+- Document list feature parity
+- Document lists should have a ""simple list"" config option
+- Depreciate Old List Plugins in Favor of DocumentList Equivalents
+
+These tasks address various feature requests, bug fixes, and improvements to enhance the user experience and functionality of CKEditor 5.
+
+"," ['type:epic', 'squad:core']","- [ ] [Setting image height and width](https://github.com/ckeditor/ckeditor5/issues/5154)
+
+- [ ] [Merge CKEditor 5 subrepositories to the main repository](https://github.com/ckeditor/ckeditor5/issues/6476)
+
+- [ ] [Adjust the CI to work with monorepo](https://github.com/ckeditor/ckeditor5/issues/6477)
+
+- [ ] [Style command should check if the classes overlap with other active styles while removing](https://github.com/ckeditor/ckeditor5/issues/11748)
+
+- [ ] [[TS] Merge the ""number"" type into PriorityString](https://github.com/ckeditor/ckeditor5/issues/12218)
+
+- [ ] [[TS] Add linter rules for enforcing imports of module augmentation and no explicit return type](https://github.com/ckeditor/ckeditor5/issues/13434)
+
+- [ ] [Allow and preserve image width and height attributes](https://github.com/ckeditor/ckeditor5/issues/14201)
+
+- [ ] [On image upload set the `width` and `height` attributes](https://github.com/ckeditor/ckeditor5/issues/14202)
+
+- [ ] [Research setting aspect-ratio](https://github.com/ckeditor/ckeditor5/issues/14366)
+
+- [ ] [Document list feature parity](https://github.com/ckeditor/ckeditor5/issues/14632)
+
+- [ ] [Document lists should have a “simple list” config option](https://github.com/ckeditor/ckeditor5/issues/14634)
+
+- [ ] [Depreciate Old `List` Plugins in Favor of `DocumentList` Equivalents](https://github.com/ckeditor/ckeditor5/issues/14942)
+"
+13," Epic Issue: Software Project Management
+"," This epic issue encompasses multiple issues related to software project management. The issues listed below cover various aspects of software project management, including feature implementation, bug fixes, and improvements. By addressing these issues, we aim to enhance the overall management of software projects.
+
+<ISSUE_NUMBER> : 5804
+<ISSUE_NUMBER> : 6406
+<ISSUE_NUMBER> : 6521
+<ISSUE_NUMBER> : 6631
+<ISSUE_NUMBER> : 7995
+<ISSUE_NUMBER> : 10014
+<ISSUE_NUMBER> : 10838
+<ISSUE_NUMBER> : 11591
+<ISSUE_NUMBER> : 12058
+<ISSUE_NUMBER> : 12466
+<ISSUE_NUMBER> : 14216
+<ISSUE_NUMBER> : 14372
+<ISSUE_NUMBER> : 14739
+<ISSUE_NUMBER> : 14950
+<ISSUE_NUMBER> : 14969
+
+"," : ['type:epic', 'squad:core']","- [ ] [Placeholders for non-restricted areas in restricted editing mode](https://github.com/ckeditor/ckeditor5/issues/5804)
+
+- [ ] [Removing complex colspan/rowspan multi-cell selections column/rows should be improved](https://github.com/ckeditor/ckeditor5/issues/6406)
+
+- [ ] [Merge cells command should not merge cells from column header with other cells](https://github.com/ckeditor/ckeditor5/issues/6521)
+
+- [ ] [The arrow next to the ""merge cells"" button seems to be disabled](https://github.com/ckeditor/ckeditor5/issues/6631)
+
+- [ ] [Implement the beforeInput support detection](https://github.com/ckeditor/ckeditor5/issues/7995)
+
+- [ ] [The find and replace view does not indicate that no matches were found](https://github.com/ckeditor/ckeditor5/issues/10014)
+
+- [ ] [Editor doesn't preserve image size when pasting resized images from Google Docs](https://github.com/ckeditor/ckeditor5/issues/10838)
+
+- [ ] [[Style dropdown] Inline styles retained when changing heading, inserting codeblock](https://github.com/ckeditor/ckeditor5/issues/11591)
+
+- [ ] [[beforeInput] Bring back basic typing support in Android](https://github.com/ckeditor/ckeditor5/issues/12058)
+
+- [ ] [Nested lists pasted from Word don't display properly while using Document lists and Indent block](https://github.com/ckeditor/ckeditor5/issues/12466)
+
+- [ ] [[GHS/Style] List styles preserves itself and spreads to other list types and blocks.](https://github.com/ckeditor/ckeditor5/issues/14216)
+
+- [ ] [[Style] Style dropdown should insert (some) elements.](https://github.com/ckeditor/ckeditor5/issues/14372)
+
+- [ ] [[Drag & drop] Preview quirks](https://github.com/ckeditor/ckeditor5/issues/14739)
+
+- [ ] [In Drag and Drop not able to drop entire paragraph to caption](https://github.com/ckeditor/ckeditor5/issues/14950)
+
+- [ ] [[Drag & drop] Handle of list item's selection and dropping (document lists)](https://github.com/ckeditor/ckeditor5/issues/14969)
+"
+25," Epic Issue: Improve Table Selection and Handling in Software
+
+"," This epic issue aims to improve the table selection and handling functionality in the software by addressing several related issues. The goal is to enhance the user experience and accessibility of working with tables in the software.
+
+"," ['type:epic', 'package:table', 'domain:accessibility']","- [ ] [Table selection with keyboard](https://github.com/ckeditor/ckeditor5/issues/6115)
+
+- [ ] [Table selection handling: Insert column, row commands](https://github.com/ckeditor/ckeditor5/issues/6125)
+
+- [ ] [Table selection handling: Remove row, column commands](https://github.com/ckeditor/ckeditor5/issues/6126)
+
+- [ ] [Table selection handling: Set heading rows, column commands](https://github.com/ckeditor/ckeditor5/issues/6127)
+
+- [ ] [Table selection handling: Split cell](https://github.com/ckeditor/ckeditor5/issues/6128)
+
+- [ ] [Selecting a table cell (or cells) through a model does not render a nice table selection](https://github.com/ckeditor/ckeditor5/issues/6346)
+
+- [ ] [Inline images - nice to have features](https://github.com/ckeditor/ckeditor5/issues/8712)
+
+- [ ] [Find and replace multiroot support](https://github.com/ckeditor/ckeditor5/issues/10146)
+
+- [ ] [[Drag & drop, intro] Prevent dropping in the impossible places (a.k.a. inception)](https://github.com/ckeditor/ckeditor5/issues/14709)
+
+- [ ] [[Drag & drop] Balloon block button](https://github.com/ckeditor/ckeditor5/issues/15029)
+"
+3," Epic Issue: Table Selection and Manipulation Enhancements
+"," Provide a description of the epic issue very briefly. This epic issue includes a series of enhancements and improvements related to the selection and manipulation of tables in CKEditor 5. These enhancements include features such as copying and pasting table fragments, handling spanned cells in pasting scenarios, merging cells, and allowing selection within object elements. These improvements aim to enhance the overall table editing experience and provide a more comprehensive set of table editing functionalities.
+"," ['type:epic', 'package:table']","- [ ] [Review behavior of existing features on multi-range selections in tables](https://github.com/ckeditor/ckeditor5/issues/6116)
+
+- [ ] [Copy selected table fragment (base)](https://github.com/ckeditor/ckeditor5/issues/6118)
+
+- [ ] [Cut / delete on selected table fragment](https://github.com/ckeditor/ckeditor5/issues/6119)
+
+- [ ] [Pasting table into a selected table fragment (bigger then one cell)](https://github.com/ckeditor/ckeditor5/issues/6120)
+
+- [ ] [Pasting table when only one table cell is selected](https://github.com/ckeditor/ckeditor5/issues/6121)
+
+- [ ] [Handling spanned cell in pasting scenarios](https://github.com/ckeditor/ckeditor5/issues/6122)
+
+- [ ] [Table selection handling: Merge cell split command](https://github.com/ckeditor/ckeditor5/issues/6123)
+
+- [ ] [Allow selection to be set on object elements](https://github.com/ckeditor/ckeditor5/issues/6154)
+
+- [ ] [Table cell/row/column selection – stage III (optional features)](https://github.com/ckeditor/ckeditor5/issues/6297)
+
+- [ ] [Handle case of a smaller table pasted into bigger selection](https://github.com/ckeditor/ckeditor5/issues/6769)
+"
+0," Epic Issue: Table Properties Alignment and Selection Improvements
+"," This epic issue aims to address various table properties alignment and selection improvements in the UI. It includes two related issues:
+- Align table properties UI to multi-range selection
+- Test whether all table features are still functional if the table selection does not work
+
+"," ['type:epic', 'package:table', 'domain:ui/ux']","- [ ] [Align table properties UI to multi-range selection](https://github.com/ckeditor/ckeditor5/issues/6150)
+
+- [ ] [Test whether all table features are still functional if the table selection does not work](https://github.com/ckeditor/ckeditor5/issues/6151)
+"
+7," Epic Issue: Improve Software Project Management
+
+"," This epic issue aims to improve software project management by addressing several issues related to table selection, input handling, and plugin migration. The specific tasks include addressing bugs and improvements in table selection behavior, enhancing input observer functionality, migrating the Delete, Enter, and ShiftEnter plugins to the beforeInput event, and using insert* types for various features. Additionally, the epic includes creating an executable script for the stale bot.
+
+"," ['type:epic', 'squad:core', 'domain:ui/ux', 'domain:dx', 'package:table', 'package:typing', 'package:list', 'package:horizontal-rule', 'package:dev', 'squad:devops', 'status:stale']","- [ ] [Table selection does not cooporate with typing](https://github.com/ckeditor/ckeditor5/issues/6284)
+
+- [ ] [Position table cell properties balloon in relation to multiple-cell](https://github.com/ckeditor/ckeditor5/issues/6357)
+
+- [ ] [Improve InputObserver so the event passes and normalizes additional information](https://github.com/ckeditor/ckeditor5/issues/7996)
+
+- [ ] [Migrate the Delete plugin to the beforeInput event](https://github.com/ckeditor/ckeditor5/issues/7998)
+
+- [ ] [Migrate the Enter and ShiftEnter plugins to beforeInput](https://github.com/ckeditor/ckeditor5/issues/7999)
+
+- [ ] [Use insert* beforeInput types across the features (list, horizontal line, etc.)](https://github.com/ckeditor/ckeditor5/issues/8001)
+
+- [ ] [[TS] Allow running tests written in TS (automated, manual)](https://github.com/ckeditor/ckeditor5/issues/11888)
+
+- [ ] [Create an executable script for the stale bot](https://github.com/ckeditor/ckeditor5/issues/15402)
+"
+29," Create Epic Issue for Table Enhancements
+"," This epic issue aims to address and enhance the functionality of the table feature in the software. It includes tasks such as enabling table selection as a core feature, adding missing badges to the README.md, and enabling block drag and drop by default. The goal is to ensure the reliability and usability of the table feature before release. 
+
+"," ['type:epic', 'package:table', 'package:find-and-replace', 'squad:core']","- [ ] [Enable table selection as core table feature](https://github.com/ckeditor/ckeditor5/issues/6343)
+
+- [ ] [Add missing badges README.md](https://github.com/ckeditor/ckeditor5/issues/10040)
+
+- [ ] [[Drag & drop] Enable block drag and drop by default](https://github.com/ckeditor/ckeditor5/issues/14734)
+"
+20," Epic Issue: Fix Cell Selection Logic
+
+"," This epic issue aims to address the problem with cell selection in which the minimum selection is always two cells, even when trying to select a single cell. The current logic only supports multi-range cell selections but neglects the option of single-cell selections. It is necessary to enhance the cell selection logic so that it allows for selecting a single cell as well.
+
+"," ['type:bug', 'package:table']","- [ ] [It should be possible to make selection of a single cell.](https://github.com/ckeditor/ckeditor5/issues/6347)
+"
+28," Code Coverage and Monorepo Epic Issue
+"," This epic issue aims to address code coverage for the monorepo structure and ensure that the online builder can handle the monorepo setup. Additionally, it includes testing and stabilizing composition (IME) using beforeInput on desktop browsers for Linux. Lastly, it involves removing the 'I' type parameter from the 'Collection' class in order to simplify and improve the codebase. This epic issue serves as a container for these multiple subtasks.
+
+", ['type:epic'],"- [ ] [Code coverage for monorepo](https://github.com/ckeditor/ckeditor5/issues/6478)
+
+- [ ] [Online builder with monorepo](https://github.com/ckeditor/ckeditor5/issues/6480)
+
+- [ ] [Test and stabilize composition (IME) using beforeInput on desktop browsers (Linux)](https://github.com/ckeditor/ckeditor5/issues/8010)
+
+- [ ] [[TS] Remove `I` type parameter from `Collection`](https://github.com/ckeditor/ckeditor5/issues/12763)
+"
+2," Epic Issue: Improve CKEditor5 Drag & Drop Functionality
+"," This epic aims to improve the drag and drop functionality in CKEditor5 by addressing several related issues. The issues include adjusting documentation for the monorepo, restoring and checking the image attribute proof of concept (PoC), researching how different sources of HTML interact with image attributes, addressing the issue of images wider than the editor being shrunk horizontally, improving the drop target line, changing the default icon of the Balloon block editor, and enhancing the image preview during drag and drop. These improvements will enhance the user experience and provide more intuitive drag and drop features in CKEditor5.
+"," ['type:epic', 'squad:core']","- [ ] [Adjust docs for monorepo](https://github.com/ckeditor/ckeditor5/issues/6479)
+
+- [ ] [Restore and check image attributes POC](https://github.com/ckeditor/ckeditor5/issues/14147)
+
+- [ ] [Research how different sources of HTML interact with img height/width attributes](https://github.com/ckeditor/ckeditor5/issues/14313)
+
+- [ ] [Images wider than editor are shrunk horizontally](https://github.com/ckeditor/ckeditor5/issues/14542)
+
+- [ ] [[Drag & drop, intro] Improve the drop target line](https://github.com/ckeditor/ckeditor5/issues/14645)
+
+- [ ] [[Drag & drop + Balloon block, intro] Change the default icon](https://github.com/ckeditor/ckeditor5/issues/14646)
+
+- [ ] [[Drag & drop] Improve images preview](https://github.com/ckeditor/ckeditor5/issues/14744)
+"
+15," Epic Issue: Update CKEditor Documentation and Image Handling
+
+"," This epic issue aims to improve the CKEditor documentation and address image handling issues. The documentation changes involve revisiting the ""Custom builds"" and ""Installing plugins"" guides, removing custom builds and adding a redirect to installing plugins. Additionally, the ""Installing plugins"" guide needs a complete rewrite with the monorepo in mind. 
+
+Regarding the image handling tasks, there are three separate issues. The first task, described in Issue #8009, involves converting the ""style=height:xx"" attribute to the model's ""resizedHeight"" for images. After resizing, two options are presented: removing ""resizedHeight"" and changing ""resizedWidth"" or changing both ""resizedHeight"" and ""resizedWidth"".
+
+Issue #14357 focuses on setting image width and height when the user edits the image. Currently, sizes are added only when switching between block and inline, but they should also be added after resizing and potentially other changes like alignment.
+
+To address these issues, an epic issue will be created to encompass all the tasks and documentation changes, providing a comprehensive solution.
+
+"," ['type:epic', 'team:devops', 'team:core', 'domain:documentation', 'domain:ui/ux']","- [ ] [Revisit ""Custom builds"" and ""Installing plugins"" guides](https://github.com/ckeditor/ckeditor5/issues/6770)
+
+- [ ] [Test and stabilize composition (IME) using beforeInput on desktop browsers (Windows)](https://github.com/ckeditor/ckeditor5/issues/8009)
+
+- [ ] [Add image resizedHeight attribute, convert from style=height:xx](https://github.com/ckeditor/ckeditor5/issues/14357)
+
+- [ ] [Set image width and height on resize (and possibly other image changes)](https://github.com/ckeditor/ckeditor5/issues/14557)
+"
+27," Migrate and Stabilize CKEditor5 Input Plugin to beforeInput Event
+"," Migrating the Input plugin to the beforeInput event is a crucial task that requires thorough testing and stabilization. This epic issue aims to address multiple related issues and ensure the smooth functioning of the CKEditor5 Input plugin across different platforms and browsers. The specific issues to be tackled include testing and stabilizing composition (IME) using beforeInput on desktop browsers (Mac), testing and stabilizing beforeInput in Collaboration Features, and addressing various scenarios and use cases related to composition, formatting, auto embedding, track changes, spell check, and more.
+"," ['type:epic', 'package:typing', 'package:cloud-services', 'domain:ui/ux', 'domain:dx', 'domain:typing/ime', 'squad:core', 'browser:chrome', 'browser:edge', 'browser:safari']","- [ ] [Migrate the Input plugin to the beforeInput event](https://github.com/ckeditor/ckeditor5/issues/7997)
+
+- [ ] [Test and stabilize composition (IME) using beforeInput on desktop browsers (Mac)](https://github.com/ckeditor/ckeditor5/issues/8008)
+
+- [ ] [Test and stabilize beforeInput in Collaboration Features](https://github.com/ckeditor/ckeditor5/issues/8013)
+"
+26," Inline images - Epic Issue
+
+"," This epic issue aims to address the requirements for inline images in the software project. The main focus is on the MVP step 2, which includes the following sub-tasks: linking images, image resizing, and support for loading only the inline image feature. By completing these tasks, the software will enable users to seamlessly work with and manipulate inline images within the application.
+
+"," ['type:epic', 'squad:core']","- [ ] [Inline images - MVP step 2](https://github.com/ckeditor/ckeditor5/issues/8666)
+"
+30," Epic Issue: Improvement of Search Functionality
+"," This epic issue aims to enhance the search functionality by implementing a standardized action when there are no more search results available. Currently, the behavior when reaching the end of search results or encountering a query that does not match is undefined. To provide a better user experience, we need to decide on and implement a consistent action in such cases.
+"," ['type:epic', 'domain:ui/ux', 'squad:features', 'package:search-functionality']","- [ ] [Action when there are no more search results available.](https://github.com/ckeditor/ckeditor5/issues/9934)
+"
+5," Epic Issue: Integration and Style Enhancements
+"," This epic issue aims to address multiple issues related to integration and style in the CKEditor software project. The issues include problems with plugin integration, style dropdown misalignments, incorrect style retention, and issues with removing inline styles. By addressing these issues, the software project will improve its functionality, usability, and overall user experience.
+"," ['type:epic', 'squad:core', 'package:style', 'package:find-and-replace', 'package:engine', 'domain:typing/ime', 'domain:dx', 'domain:integration-dx', 'domain:framework-dx', 'browser:chrome']","- [ ] [Integrate find and replace plugin with source mode](https://github.com/ckeditor/ckeditor5/issues/10001)
+
+- [ ] [Not able to select whole paragraph with triple click when there is a table right after it](https://github.com/ckeditor/ckeditor5/issues/11130)
+
+- [ ] [Migrate to beforeInput vol 2](https://github.com/ckeditor/ckeditor5/issues/11438)
+
+- [ ] [[Style dropdpown] Style grid gets misaligned when two styles are in a row](https://github.com/ckeditor/ckeditor5/issues/11575)
+
+- [ ] [[Style dropdown] Missing integration for block quotes](https://github.com/ckeditor/ckeditor5/issues/11576)
+
+- [ ] [[Style dropdown] Incorrect style retained after creating a new paragraph](https://github.com/ckeditor/ckeditor5/issues/11578)
+
+- [ ] [[Style dropdown] Inline styles are not disabled in the code block](https://github.com/ckeditor/ckeditor5/issues/11581)
+
+- [ ] [[Style dropdown] Should apply block style to all selected blocks](https://github.com/ckeditor/ckeditor5/issues/11582)
+
+- [ ] [[Style dropdown] Inline style can't be removed from an inline widget itself](https://github.com/ckeditor/ckeditor5/issues/11584)
+
+- [ ] [[Style dropdown] Block style applied to the block before a block widget](https://github.com/ckeditor/ckeditor5/issues/11585)
+
+- [ ] [[Style dropdown] Inline style can't be removed after adding any paragraph styling (e.g. highlight, bold, italic)](https://github.com/ckeditor/ckeditor5/issues/11588)
+
+- [ ] [[Chrome] Can't remove the whole content when the widget is at the beginning/end of the document](https://github.com/ckeditor/ckeditor5/issues/11904)
+
+- [ ] [[TS] Suggest and validate names of plugins and commands at type level](https://github.com/ckeditor/ckeditor5/issues/13743)
+
+- [ ] [[Drag & drop] Upload image issues](https://github.com/ckeditor/ckeditor5/issues/14740)
+"
+31," Epic Issue: Improvement for Image Handling and Styles Feature
+"," This epic issue encompasses several improvement suggestions related to the image plugin and the styles feature in CKEditor.
+"," ['type:improvement', 'support:2']","- [ ] [Image plugin doesn't handle width/height in attributes](https://github.com/ckeditor/ckeditor5/issues/11393)
+
+- [ ] [[Style dropdown] `<a>` text style can be applied to any text node, instead of only `<a>` elements](https://github.com/ckeditor/ckeditor5/issues/11709)
+
+- [ ] [Styles Feature: Hide inapplicable styles instead of disabling them](https://github.com/ckeditor/ckeditor5/issues/12770)
+
+- [ ] [Styles Feature: Allow specifying multiple (block) elements to apply to](https://github.com/ckeditor/ckeditor5/issues/12771)
+
+- [ ] [Image size attributes and picture (art direction)](https://github.com/ckeditor/ckeditor5/issues/14532)
+"
+17," [Epic] Integration and Clean up for Style Dropdown and HTML Support
+"," This epic issue aims to address the missing integration with block widgets and the clean up of disallowed attributes in the Style Dropdown and HTML Support packages. It involves enhancing the functionality to apply and remove styles on block widgets as well as clearing disallowed attributes upon editing. By resolving these issues, we can ensure better overall usability and adherence to design standards.
+", ['type:epic'],"- [ ] [[Style dropdown] Missing integration with block widgets](https://github.com/ckeditor/ckeditor5/issues/11577)
+
+- [ ] [[Style dropdown][GHS] Clean up disallowed attributes upon editing](https://github.com/ckeditor/ckeditor5/issues/11606)
+"
+19, Epic Issue: Improve Drag & Drop Functionality and Format Removal in Software ," This epic issue aims to address the following bugs related to the drag and drop functionality and format removal in the software:
+
+1. Remove format does not remove styles applied by style dropdown plugin
+2. [Drag & drop] Don't replace the image if dropped below
+3. [Drag & drop] Fix d&d between editors and roots
+
+The first issue reports that the ""Remove format"" button does nothing or is inactive when trying to remove styles applied by the style dropdown plugin. The expected result is that the button should work, especially on inline styles. 
+
+The second issue mentions that dragging and dropping a new image below the selected image actually replaces the selected image instead of appearing below it. The expected result is for the new image to appear below the selected image. 
+
+The third issue states that the formatting and behavior of drag and drop between editors and roots is not consistent, leading to different content. Specific examples need to be added to further describe the issue. 
+
+These bugs need to be addressed to improve the overall user experience and the reliability of the software's drag and drop functionality and format removal feature.
+
+"," ['type:bug', 'squad:core']","- [ ] [Remove format does not remove styles applied by style dropdown plugin](https://github.com/ckeditor/ckeditor5/issues/11580)
+
+- [ ] [[Drag & drop] Don't replace the image if dropped below](https://github.com/ckeditor/ckeditor5/issues/14710)
+
+- [ ] [[Drag & drop] Fix d&d between editors and roots ](https://github.com/ckeditor/ckeditor5/issues/14738)
+"
+11, Integration and Improvement of Styles Feature for CKEditor," Enhance the styles feature in CKEditor to improve integration with document lists and allow for better management of style definitions. The current implementation of the styles feature does not interact with document lists properly, leading to an inability to apply styles to list elements such as `ol`, `ul`, and `li`. Additionally, the style definitions can be improved by allowing multiple selectors in the `element` attribute and automatically removing conflicting classes.
+
+"," ['type:epic', 'squad:core', 'package:style']","- [ ] [[Style dropdown] Integration with document (advanced) lists](https://github.com/ckeditor/ckeditor5/issues/11590)
+
+- [ ] [[Style dropdown] Can't change the style of custom element introduced via Headings configuration](https://github.com/ckeditor/ckeditor5/issues/12625)
+
+- [ ] [Can't set the style on <div> using Styles dropdown](https://github.com/ckeditor/ckeditor5/issues/13341)
+
+- [ ] [Improvement for the styles definitions, multiple selector and class removal](https://github.com/ckeditor/ckeditor5/issues/14946)
+"
+12," [Epic] TypeScript-related Enhancements
+"," This epic issue aims to address several TypeScript-related enhancements for CKEditor 5. It includes revising the code style guide to cover TypeScript features, adding styles to images in the Style dropdown, removing community types from @types, updating the README with TypeScript information, and implementing todo lists in document lists. These enhancements will improve the TypeScript development experience and documentation for CKEditor 5.
+", ['type:epic'],"- [ ] [[TS] Revise code style guide to cover TypeScript](https://github.com/ckeditor/ckeditor5/issues/11723)
+
+- [ ] [[Style dropdown] Add styles to images <img>](https://github.com/ckeditor/ckeditor5/issues/13778)
+
+- [ ] [[TS] Remove community types in @types](https://github.com/ckeditor/ckeditor5/issues/13830)
+
+- [ ] [[TS] Update README](https://github.com/ckeditor/ckeditor5/issues/13831)
+
+- [ ] [Todo lists in Document lists](https://github.com/ckeditor/ckeditor5/issues/14663)
+"
+4," Epic Issue: Cannot set block style on table
+
+"," The epic issue is about the inability to set block styles on tables. Currently, when attempting to select block styles for tables, all block styles are disabled. This prevents users from applying the desired styling to tables.
+
+"," 
+- type:epic
+- squad:core
+- package:style","- [ ] [Cannot set block style on table](https://github.com/ckeditor/ckeditor5/issues/12441)
+"
+8," Epic Issue: Software Project Management for List Plugin and Styles Feature
+
+"," This epic issue aims to address two separate issues related to the List Plugin and Styles Feature in the software project. The first issue involves the incorrect conversion of subsequent lists with different types, resulting in resetting numbering and splitting lists. The second issue relates to a clash between the Styles Feature and Font Styling Features, where the downcast priority is not consistent.
+
+", Epic,"- [ ] [New list plugin doesn't convert subsequent lists with a different type properly (aka resetting numbering, splitting lists)](https://github.com/ckeditor/ckeditor5/issues/12738)
+
+- [ ] [Styles Feature Clashes With Font Styling Features Regarding Downcast Priority](https://github.com/ckeditor/ckeditor5/issues/12777)
+
+- [ ] [[Drag & drop] Extend range when it touches beginning or end of the parent element](https://github.com/ckeditor/ckeditor5/issues/14940)
+"
+14," [EPIC] Add types to DLLs
+<LABELS> ['squad:core']
+
+"," This epic issue aims to add type declarations to the DLLs used in the software project. By providing type definitions for DLLs, it will enhance the developer experience and improve the overall maintainability of the codebase. The goal is to ensure that when using DLLs, developers have access to the necessary types seamlessly."," ['squad:core']
+
+<BODY> This epic issue aims to add type declarations to the DLLs used in the software project. By providing type definitions for DLLs, it will enhance the developer experience and improve the overall maintainability of the codebase. The goal is to ensure that when using DLLs, developers have access to the necessary types seamlessly.","- [ ] [[TS] Add types to DLLs](https://github.com/ckeditor/ckeditor5/issues/13855)
+"
+18," Epic Issue: Stale Issues and PRs Management
+<LABELS> ['type:epic', 'squad:devops']
+
+"," This epic issue aims to implement a system for managing stale issues and pull requests in software repositories. The goal is to identify and take appropriate actions on issues and PRs that have not had any activity for a specified period of time. The system will mark such items as stale and perform actions such as adding labels, making comments, unmarking, unlabeling, or closing them based on the activity status.
+
+The first part of this epic involves finding issues and pull requests that have been inactive for 365 days and labeling them as `status:stale`. A comment will be made on each item, notifying the user that it will be closed within 30 days.
+
+The second part of this epic focuses on iterating over the previously marked stale issues and PRs. If there has been any new activity since marking them as stale, the system will unmark the item. If there has been no activity for 30 days, the system will unlabel and close the item. Items that are still pending feedback will be left unchanged.
+
+The configuration fields for this system include the repository slug/name/owner, GitHub token with repo:write access, time periods for considering an item as stale or inactive, labels for identifying stale items, labels to apply when closing an item, and messages to be sent by the bot when closing an issue or PR.
+
+"," ['type:epic', 'squad:devops']
+
+<BODY> This epic issue aims to implement a system for managing stale issues and pull requests in software repositories. The goal is to identify and take appropriate actions on issues and PRs that have not had any activity for a specified period of time. The system will mark such items as stale and perform actions such as adding labels, making comments, unmarking, unlabeling, or closing them based on the activity status.
+
+The first part of this epic involves finding issues and pull requests that have been inactive for 365 days and labeling them as `status:stale`. A comment will be made on each item, notifying the user that it will be closed within 30 days.
+
+The second part of this epic focuses on iterating over the previously marked stale issues and PRs. If there has been any new activity since marking them as stale, the system will unmark the item. If there has been no activity for 30 days, the system will unlabel and close the item. Items that are still pending feedback will be left unchanged.
+
+The configuration fields for this system include the repository slug/name/owner, GitHub token with repo:write access, time periods for considering an item as stale or inactive, labels for identifying stale items, labels to apply when closing an item, and messages to be sent by the bot when closing an issue or PR.
+
+","- [ ] [Find issues matching criteria to mark them as stale](https://github.com/ckeditor/ckeditor5/issues/15400)
+
+- [ ] [Determine if stale issues need an action (close, unlabel, ignore)](https://github.com/ckeditor/ckeditor5/issues/15401)
+"

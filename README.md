@@ -4,4 +4,5 @@
 - [ ] Scrape more repositories after manually inspecting the repository informations.
 - preprocess_data/preprocess_data.ipynb: For preprocessing raw issue data to, structured data. An example output can be seen on ckeditor5_issues.csv
 
-- To run: Make sure you have a config.py with your Github API token defined in it such as 'TOKEN=<YOUR TOKEN HERE>'.
+- To run: Make sure you have a config.py with your Github API token defined in it such as 'TOKEN = <YOUR TOKEN HERE>'.
+- For epic issue generation create a openai_key.py with you OpenAI API key such as OPEN_AI_KEY = <YOUR TOKEN HERE>
