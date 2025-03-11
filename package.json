@@ -2,13 +2,21 @@
   "name": "github-issue-scraper",
   "version": "1.0.0",
   "description": "A simple Node.js app to scrape GitHub repository issues",
-  "main": "github_issue_scraper.js",
+  "main": "app.js",
   "scripts": {
-    "start": "node github_issue_scraper.js"
+    "start": "node app.js",
+    "dev": "nodemon app.js"
   },
   "dependencies": {
     "axios": "^1.6.2",
-    "csv-writer": "^1.6.0"
+    "csv-writer": "^1.6.0",
+    "express": "^4.18.2",
+    "ejs": "^3.1.9",
+    "body-parser": "^1.20.2",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
   },
   "engines": {
     "node": ">=14.0.0"
