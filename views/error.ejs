@@ -1,0 +1,31 @@
+<%- include('partials/header.ejs') %>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-8 mx-auto">
+      <div class="card shadow">
+        <div class="card-header bg-danger text-white">
+          <h2 class="h4 mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Error</h2>
+        </div>
+        <div class="card-body">
+          <h3 class="h5 mb-3"><%= message %></h3>
+          
+          <% if (process.env.NODE_ENV !== 'production' && error) { %>
+            <div class="alert alert-secondary">
+              <h4 class="h6">Error details:</h4>
+              <pre class="mb-0"><%= error.stack %></pre>
+            </div>
+          <% } %>
+          
+          <div class="mt-4">
+            <a href="/" class="btn btn-primary">
+              <i class="fas fa-home me-2"></i>Back to Home
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer.ejs') %> 

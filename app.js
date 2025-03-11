@@ -4,6 +4,7 @@ const fs = require('fs');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
 const scraper = require('./github_scraper');
+const clustering = require('./issue_clustering');
 
 // Initialize express app
 const app = express();
@@ -54,6 +55,8 @@ if (!fs.existsSync(dataDir)) {
 
 // In-memory cache for scraped issues
 let cachedIssues = {};
+// In-memory cache for clustered issues
+let cachedClusters = {};
 
 // Routes
 app.get('/', (req, res) => {
@@ -161,6 +164,60 @@ app.get('/download/:owner/:name', (req, res) => {
   }
   
   res.download(cachedIssues[repoKey].csvPath);
+});
+
+// New routes for clustering
+app.get('/clusters/:owner/:name', async (req, res) => {
+  const { owner, name } = req.params;
+  const repoKey = `${owner}/${name}`;
+  
+  if (!cachedIssues[repoKey]) {
+    return res.redirect('/');
+  }
+  
+  // Check if we have cached clusters
+  if (!cachedClusters[repoKey]) {
+    console.log(`Clustering issues for ${owner}/${name}...`);
+    
+    try {
+      // Determine the number of clusters (adjust based on issue count)
+      const numIssues = cachedIssues[repoKey].issues.length;
+      const numClusters = Math.min(
+        Math.max(3, Math.floor(Math.sqrt(numIssues / 2))),
+        10
+      );
+      
+      // Perform clustering
+      const clusterResults = clustering.clusterIssues(
+        JSON.parse(JSON.stringify(cachedIssues[repoKey].issues)), // Create a deep copy
+        owner,
+        name,
+        numClusters
+      );
+      
+      // Cache the results
+      cachedClusters[repoKey] = clusterResults;
+      
+    } catch (error) {
+      console.error('Clustering error:', error);
+      return res.render('error', {
+        title: 'Clustering Error',
+        message: `Error clustering issues: ${error.message}`,
+        error: error
+      });
+    }
+  }
+  
+  // Render the clusters view
+  res.render('clusters', {
+    title: `Issue Clusters - ${owner}/${name}`,
+    repoOwner: owner,
+    repoName: name,
+    issues: cachedClusters[repoKey].issues,
+    epics: cachedClusters[repoKey].epics,
+    references: cachedClusters[repoKey].references,
+    clusters: cachedClusters[repoKey].clusters
+  });
 });
 
 // Start the server

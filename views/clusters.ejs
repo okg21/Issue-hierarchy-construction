@@ -1,0 +1,238 @@
+<%- include('partials/header.ejs') %>
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1><i class="fas fa-project-diagram me-2"></i>Issue Clusters for <%= repoOwner %>/<%= repoName %></h1>
+        <p class="text-muted">
+            <i class="fas fa-info-circle me-2"></i>Issues are grouped into <%= Object.keys(clusters).length %> clusters based on content similarity
+        </p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="/repository/<%= repoOwner %>/<%= repoName %>" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Repository
+        </a>
+    </div>
+</div>
+
+<% if (epics && epics.length > 0) { %>
+<div class="card mb-4 shadow">
+    <div class="card-header bg-primary text-white">
+        <h2 class="h4 mb-0"><i class="fas fa-bookmark me-2"></i>Epic Issues (<%= epics.length %>)</h2>
+    </div>
+    <div class="card-body">
+        <div class="list-group">
+            <% epics.forEach(epic => { %>
+                <a href="/issue/<%= repoOwner %>/<%= repoName %>/<%= epic.number %>" class="list-group-item list-group-item-action">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">#<%= epic.number %>: <%= epic.title %></h5>
+                        <small class="text-muted">
+                            <% if (epic.references && epic.references.length > 0) { %>
+                                <span class="badge bg-info text-dark"><i class="fas fa-link me-1"></i><%= epic.references.length %> references</span>
+                            <% } %>
+                        </small>
+                    </div>
+                    <p class="mb-1 text-truncate"><%= epic.body ? epic.body.substring(0, 150) + (epic.body.length > 150 ? '...' : '') : 'No description' %></p>
+                    <small class="text-muted">
+                        <% if (epic.labels && epic.labels.length > 0) { %>
+                            <% epic.labels.forEach(label => { %>
+                                <span class="badge me-1 label-badge" 
+                                      style="background-color: #<%= label.color %>; color: <%= getContrastColor(label.color) %>;">
+                                    <%= label.name %>
+                                </span>
+                            <% }) %>
+                        <% } %>
+                    </small>
+                </a>
+            <% }) %>
+        </div>
+    </div>
+</div>
+<% } %>
+
+<div class="row">
+    <% Object.keys(clusters).forEach(clusterId => { %>
+        <div class="col-md-6 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header bg-dark text-white">
+                    <h3 class="h5 mb-0">
+                        <i class="fas fa-layer-group me-2"></i>
+                        Cluster <%= parseInt(clusterId) + 1 %>: 
+                        <small><%= clusters[clusterId].topTerms.join(', ') %></small>
+                    </h3>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        <% clusters[clusterId].issues.slice(0, 10).forEach(issue => { %>
+                            <a href="/issue/<%= repoOwner %>/<%= repoName %>/<%= issue.number %>" 
+                               class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between align-items-center">
+                                    <h6 class="mb-1">
+                                        <span class="badge <%= issue.state === 'CLOSED' ? 'bg-secondary' : 'bg-success' %> me-2">
+                                            <i class="fas <%= issue.state === 'CLOSED' ? 'fa-check-circle' : 'fa-exclamation-circle' %>"></i>
+                                        </span>
+                                        #<%= issue.number %>: <%= issue.title %>
+                                    </h6>
+                                </div>
+                            </a>
+                        <% }) %>
+                        
+                        <% if (clusters[clusterId].issues.length > 10) { %>
+                            <div class="list-group-item text-center text-muted">
+                                + <%= clusters[clusterId].issues.length - 10 %> more issues
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+                <div class="card-footer bg-light">
+                    <small class="text-muted">
+                        <strong><%= clusters[clusterId].issues.length %></strong> issues in this cluster
+                    </small>
+                </div>
+            </div>
+        </div>
+    <% }) %>
+</div>
+
+<div class="card mb-4 shadow">
+    <div class="card-header bg-info text-white">
+        <h2 class="h4 mb-0"><i class="fas fa-project-diagram me-2"></i>Issue Relationship Graph</h2>
+    </div>
+    <div class="card-body">
+        <div id="graph-container" style="height: 500px; border: 1px solid #ccc; border-radius: 4px;"></div>
+    </div>
+</div>
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        try {
+            // Data for the graph visualization
+            const nodes = <%= JSON.stringify(issues.map(i => ({ 
+                id: i.number, 
+                title: i.title, 
+                cluster: i.cluster || 0,
+                state: i.state,
+                label: `#${i.number}`
+            }))) %>;
+            
+            const links = [];
+            
+            // Create links based on references (safely)
+            <% issues.forEach(issue => { %>
+                <% if (issue.references && issue.references.length > 0) { %>
+                    <% issue.references.forEach(ref => { %>
+                        // Only add link if the referenced issue exists
+                        if (<%= JSON.stringify(issues.map(i => i.number)) %>.includes(<%= ref %>)) {
+                            links.push({
+                                source: <%= issue.number %>,
+                                target: <%= ref %>,
+                                value: 1
+                            });
+                        }
+                    <% }); %>
+                <% } %>
+            <% }); %>
+            
+            // Only render graph if there are nodes
+            if (nodes.length > 0) {
+                // D3.js graph visualization
+                const width = document.getElementById('graph-container').offsetWidth;
+                const height = 500;
+                
+                const svg = d3.select('#graph-container')
+                    .append('svg')
+                    .attr('width', width)
+                    .attr('height', height);
+                    
+                // Color scale for clusters
+                const color = d3.scaleOrdinal(d3.schemeCategory10);
+                
+                // Create a force simulation
+                const simulation = d3.forceSimulation(nodes)
+                    .force('link', d3.forceLink(links).id(d => d.id).distance(100))
+                    .force('charge', d3.forceManyBody().strength(-300))
+                    .force('center', d3.forceCenter(width / 2, height / 2))
+                    .force('collide', d3.forceCollide().radius(30));
+                    
+                // Create links
+                const link = svg.append('g')
+                    .selectAll('line')
+                    .data(links)
+                    .enter()
+                    .append('line')
+                    .attr('stroke', '#999')
+                    .attr('stroke-opacity', 0.6)
+                    .attr('stroke-width', d => Math.sqrt(d.value));
+                    
+                // Create nodes
+                const node = svg.append('g')
+                    .selectAll('g')
+                    .data(nodes)
+                    .enter()
+                    .append('g')
+                    .call(d3.drag()
+                        .on('start', dragstarted)
+                        .on('drag', dragged)
+                        .on('end', dragended));
+                        
+                // Add circles for each node
+                node.append('circle')
+                    .attr('r', 10)
+                    .attr('fill', d => color(d.cluster))
+                    .attr('stroke', '#fff')
+                    .attr('stroke-width', 1.5);
+                    
+                // Add labels for each node
+                node.append('text')
+                    .attr('dx', 12)
+                    .attr('dy', '.35em')
+                    .text(d => d.label)
+                    .style('font-size', '10px');
+                    
+                // Add titles for hover
+                node.append('title')
+                    .text(d => `#${d.id}: ${d.title}`);
+                    
+                // Update positions on each tick
+                simulation.on('tick', () => {
+                    link
+                        .attr('x1', d => d.source.x)
+                        .attr('y1', d => d.source.y)
+                        .attr('x2', d => d.target.x)
+                        .attr('y2', d => d.target.y);
+                        
+                    node
+                        .attr('transform', d => `translate(${Math.max(10, Math.min(width - 10, d.x))}, ${Math.max(10, Math.min(height - 10, d.y))})`);
+                });
+                
+                // Drag functions
+                function dragstarted(event, d) {
+                    if (!event.active) simulation.alphaTarget(0.3).restart();
+                    d.fx = d.x;
+                    d.fy = d.y;
+                }
+                
+                function dragged(event, d) {
+                    d.fx = event.x;
+                    d.fy = event.y;
+                }
+                
+                function dragended(event, d) {
+                    if (!event.active) simulation.alphaTarget(0);
+                    d.fx = null;
+                    d.fy = null;
+                }
+            } else {
+                // No nodes to display
+                document.getElementById('graph-container').innerHTML = 
+                    '<div class="alert alert-info m-4">No issue relationships to display</div>';
+            }
+        } catch (error) {
+            console.error('Error rendering graph:', error);
+            document.getElementById('graph-container').innerHTML = 
+                '<div class="alert alert-danger m-4">Error displaying graph: ' + error.message + '</div>';
+        }
+    });
+</script>
+
+<%- include('partials/footer.ejs') %> 

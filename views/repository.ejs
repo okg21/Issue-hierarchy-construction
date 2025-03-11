@@ -13,6 +13,9 @@
         <a href="/download/<%= repoOwner %>/<%= repoName %>" class="btn btn-success">
             <i class="fas fa-file-csv me-2"></i>Download CSV
         </a>
+        <a href="/clusters/<%= repoOwner %>/<%= repoName %>" class="btn btn-info ms-2">
+            <i class="fas fa-project-diagram me-2"></i>Cluster Issues
+        </a>
         <a href="/" class="btn btn-secondary ms-2">
             <i class="fas fa-home me-2"></i>Home
         </a>
@@ -45,6 +48,10 @@
                     <label for="searchFilter" class="form-label">Search</label>
                     <input type="text" class="form-control" id="searchFilter" placeholder="Search in title or body">
                 </div>
+                
+                <button id="resetFilters" class="btn btn-outline-secondary w-100">
+                    <i class="fas fa-undo me-2"></i>Reset Filters
+                </button>
             </div>
         </div>
     </div>
@@ -134,11 +141,14 @@
         const labelFilter = document.getElementById('labelFilter');
         const searchFilter = document.getElementById('searchFilter');
         const issueItems = document.querySelectorAll('.issue-item');
+        const resetFiltersBtn = document.getElementById('resetFilters');
         
         function applyFilters() {
             const stateValue = stateFilter.value;
             const labelValue = labelFilter.value.toLowerCase();
             const searchValue = searchFilter.value.toLowerCase();
+            
+            let visibleCount = 0;
             
             issueItems.forEach(item => {
                 const state = item.getAttribute('data-state');
@@ -153,15 +163,31 @@
                 
                 if (stateMatch && labelMatch && searchMatch) {
                     item.style.display = '';
+                    visibleCount++;
                 } else {
                     item.style.display = 'none';
                 }
             });
+            
+            // Update count in title
+            const issuesHeader = document.querySelector('.card-header .h5');
+            if (issuesHeader) {
+                issuesHeader.innerHTML = `<i class="fas fa-list me-2"></i>Issues <small>(${visibleCount} of ${issueItems.length} shown)</small>`;
+            }
         }
         
-        stateFilter.addEventListener('change', applyFilters);
-        labelFilter.addEventListener('input', applyFilters);
-        searchFilter.addEventListener('input', applyFilters);
+        if (stateFilter) stateFilter.addEventListener('change', applyFilters);
+        if (labelFilter) labelFilter.addEventListener('input', applyFilters);
+        if (searchFilter) searchFilter.addEventListener('input', applyFilters);
+        
+        if (resetFiltersBtn) {
+            resetFiltersBtn.addEventListener('click', function() {
+                if (stateFilter) stateFilter.value = 'all';
+                if (labelFilter) labelFilter.value = '';
+                if (searchFilter) searchFilter.value = '';
+                applyFilters();
+            });
+        }
     });
 </script>
 
