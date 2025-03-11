@@ -1,0 +1,168 @@
+<%- include('partials/header.ejs') %>
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1><i class="fab fa-github me-2"></i><%= repoOwner %>/<%= repoName %></h1>
+        <p class="text-muted">
+            <i class="far fa-clock me-2"></i>Scraped on: <%= timestamp.toLocaleString() %>
+            <span class="mx-2">|</span>
+            <i class="fas fa-bug me-2"></i>Total issues: <%= issues.length %>
+        </p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="/download/<%= repoOwner %>/<%= repoName %>" class="btn btn-success">
+            <i class="fas fa-file-csv me-2"></i>Download CSV
+        </a>
+        <a href="/" class="btn btn-secondary ms-2">
+            <i class="fas fa-home me-2"></i>Home
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-3">
+        <!-- Filter controls -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h3 class="h5 mb-0"><i class="fas fa-filter me-2"></i>Filters</h3>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="stateFilter" class="form-label">Status</label>
+                    <select class="form-select" id="stateFilter">
+                        <option value="all">All</option>
+                        <option value="OPEN">Open</option>
+                        <option value="CLOSED">Closed</option>
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="labelFilter" class="form-label">Labels</label>
+                    <input type="text" class="form-control" id="labelFilter" placeholder="Filter by label">
+                </div>
+                
+                <div class="mb-3">
+                    <label for="searchFilter" class="form-label">Search</label>
+                    <input type="text" class="form-control" id="searchFilter" placeholder="Search in title or body">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-9">
+        <!-- Issues list -->
+        <div class="card shadow">
+            <div class="card-header bg-dark text-white">
+                <h3 class="h5 mb-0"><i class="fas fa-list me-2"></i>Issues</h3>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush" id="issuesList">
+                    <% issues.forEach(issue => { %>
+                        <a href="/issue/<%= repoOwner %>/<%= repoName %>/<%= issue.number %>" 
+                            class="list-group-item list-group-item-action issue-item"
+                            data-state="<%= issue.state %>"
+                            data-labels="<%= JSON.stringify(issue.labels.map(l => l.name)) %>">
+                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                <h5 class="mb-1">
+                                    <span class="badge <%= issue.state === 'CLOSED' ? 'bg-secondary' : 'bg-success' %> me-2">
+                                        <i class="fas <%= issue.state === 'CLOSED' ? 'fa-check-circle' : 'fa-exclamation-circle' %>"></i>
+                                        <%= issue.state %>
+                                    </span>
+                                    #<%= issue.number %> - <%= issue.title %>
+                                </h5>
+                                <small class="text-muted">
+                                    <i class="far fa-calendar-alt me-1"></i><%= new Date(issue.createdAt).toLocaleDateString() %>
+                                </small>
+                            </div>
+                            
+                            <div class="mb-1 text-truncate issue-body-preview">
+                                <%= issue.body ? issue.body.substring(0, 150) + (issue.body.length > 150 ? '...' : '') : 'No description' %>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                <div>
+                                    <% if (issue.labels && issue.labels.length > 0) { %>
+                                        <% issue.labels.forEach(label => { %>
+                                            <span class="badge me-1 label-badge" 
+                                                  style="background-color: #<%= label.color %>; color: <%= getContrastColor(label.color) %>;">
+                                                <%= label.name %>
+                                            </span>
+                                        <% }) %>
+                                    <% } %>
+                                </div>
+                                <div>
+                                    <% if (issue.comments && issue.comments.length > 0) { %>
+                                        <span class="badge bg-info text-dark">
+                                            <i class="far fa-comment me-1"></i><%= issue.comments.length %>
+                                        </span>
+                                    <% } %>
+                                    <% if (issue.assignees && issue.assignees.length > 0) { %>
+                                        <span class="badge bg-dark">
+                                            <i class="far fa-user me-1"></i><%= issue.assignees.length %>
+                                        </span>
+                                    <% } %>
+                                </div>
+                            </div>
+                        </a>
+                    <% }) %>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Function to determine if text should be white or black based on background color
+    function getContrastColor(hexcolor) {
+        if (!hexcolor) return '#000000';
+        
+        // Convert hex to RGB
+        const r = parseInt(hexcolor.substr(0, 2), 16);
+        const g = parseInt(hexcolor.substr(2, 2), 16);
+        const b = parseInt(hexcolor.substr(4, 2), 16);
+        
+        // Calculate luminance
+        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        
+        // Return black for light colors, white for dark colors
+        return luminance > 0.5 ? '#000000' : '#ffffff';
+    }
+    
+    // Filters functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const stateFilter = document.getElementById('stateFilter');
+        const labelFilter = document.getElementById('labelFilter');
+        const searchFilter = document.getElementById('searchFilter');
+        const issueItems = document.querySelectorAll('.issue-item');
+        
+        function applyFilters() {
+            const stateValue = stateFilter.value;
+            const labelValue = labelFilter.value.toLowerCase();
+            const searchValue = searchFilter.value.toLowerCase();
+            
+            issueItems.forEach(item => {
+                const state = item.getAttribute('data-state');
+                const labelsJson = item.getAttribute('data-labels');
+                const labels = JSON.parse(labelsJson).map(label => label.toLowerCase());
+                const title = item.querySelector('h5').textContent.toLowerCase();
+                const body = item.querySelector('.issue-body-preview').textContent.toLowerCase();
+                
+                const stateMatch = stateValue === 'all' || state === stateValue;
+                const labelMatch = labelValue === '' || labels.some(label => label.includes(labelValue));
+                const searchMatch = searchValue === '' || title.includes(searchValue) || body.includes(searchValue);
+                
+                if (stateMatch && labelMatch && searchMatch) {
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+        
+        stateFilter.addEventListener('change', applyFilters);
+        labelFilter.addEventListener('input', applyFilters);
+        searchFilter.addEventListener('input', applyFilters);
+    });
+</script>
+
+<%- include('partials/footer.ejs') %> 

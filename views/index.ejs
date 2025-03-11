@@ -1,0 +1,66 @@
+<%- include('partials/header.ejs') %>
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h2 class="h4 mb-0"><i class="fas fa-search me-2"></i>Scrape GitHub Repository Issues</h2>
+            </div>
+            <div class="card-body">
+                <% if (error) { %>
+                    <div class="alert alert-danger">
+                        <%= error %>
+                    </div>
+                <% } %>
+
+                <form action="/scrape" method="POST">
+                    <div class="mb-3">
+                        <label for="repoUrl" class="form-label">GitHub Repository URL</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fab fa-github"></i></span>
+                            <input type="url" class="form-control" id="repoUrl" name="repoUrl" 
+                                placeholder="https://github.com/owner/repository" required>
+                        </div>
+                        <div class="form-text">Enter the full URL to the GitHub repository</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="maxIssues" class="form-label">Maximum Issues to Scrape</label>
+                        <input type="number" class="form-control" id="maxIssues" name="maxIssues" 
+                            placeholder="Leave empty to scrape all issues" min="1">
+                        <div class="form-text">Optional: Limit the number of issues to scrape (leave empty to scrape all)</div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-download me-2"></i>Scrape Issues
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <% if (recentRepos && recentRepos.length > 0) { %>
+            <div class="card mt-4 shadow">
+                <div class="card-header bg-success text-white">
+                    <h2 class="h4 mb-0"><i class="fas fa-history me-2"></i>Recently Scraped Repositories</h2>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        <% recentRepos.forEach(repo => { %>
+                            <a href="/repository/<%= repo %>" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="fab fa-github me-2"></i>
+                                    <%= repo %>
+                                </div>
+                                <span class="badge bg-primary rounded-pill">
+                                    <i class="fas fa-arrow-right"></i>
+                                </span>
+                            </a>
+                        <% }); %>
+                    </div>
+                </div>
+            </div>
+        <% } %>
+    </div>
+</div>
+
+<%- include('partials/footer.ejs') %> 
