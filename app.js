@@ -171,15 +171,16 @@ app.get('/clusters/:owner/:name', async (req, res) => {
   const { owner, name } = req.params;
   const repoKey = `${owner}/${name}`;
   
-  if (!cachedIssues[repoKey]) {
-    return res.redirect('/');
-  }
-  
-  // Check if we have cached clusters
-  if (!cachedClusters[repoKey]) {
-    console.log(`Clustering issues for ${owner}/${name}...`);
+  try {
+    // Check if we have cached clusters
+    if (!cachedIssues[repoKey]) {
+      return res.redirect('/');
+    }
     
-    try {
+    // Check if we have cached clusters
+    if (!cachedClusters[repoKey]) {
+      console.log(`Clustering issues for ${owner}/${name}...`);
+      
       // Determine the number of clusters (adjust based on issue count)
       const numIssues = cachedIssues[repoKey].issues.length;
       const numClusters = Math.min(
@@ -188,7 +189,7 @@ app.get('/clusters/:owner/:name', async (req, res) => {
       );
       
       // Perform clustering
-      const clusterResults = clustering.clusterIssues(
+      const clusterResults = await clustering.clusterIssues(
         JSON.parse(JSON.stringify(cachedIssues[repoKey].issues)), // Create a deep copy
         owner,
         name,
@@ -197,27 +198,88 @@ app.get('/clusters/:owner/:name', async (req, res) => {
       
       // Cache the results
       cachedClusters[repoKey] = clusterResults;
-      
-    } catch (error) {
-      console.error('Clustering error:', error);
-      return res.render('error', {
-        title: 'Clustering Error',
-        message: `Error clustering issues: ${error.message}`,
-        error: error
-      });
     }
+    
+    // Ensure we have valid cluster data
+    if (!cachedClusters[repoKey] || !cachedClusters[repoKey].clusters) {
+      throw new Error('Failed to generate clusters');
+    }
+    
+    // Render the clusters view
+    res.render('clusters', {
+      title: `Issue Clusters - ${owner}/${name}`,
+      repoOwner: owner,
+      repoName: name,
+      issues: cachedClusters[repoKey].issues || [],
+      epics: cachedClusters[repoKey].epics || [],
+      references: cachedClusters[repoKey].references || [],
+      clusters: cachedClusters[repoKey].clusters || {},
+      getContrastColor: (hexcolor) => {
+        // Convert hex to RGB
+        const r = parseInt(hexcolor.substr(0, 2), 16);
+        const g = parseInt(hexcolor.substr(2, 2), 16);
+        const b = parseInt(hexcolor.substr(4, 2), 16);
+        // Calculate luminance
+        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        // Return black or white based on luminance
+        return luminance > 0.5 ? '#000000' : '#ffffff';
+      }
+    });
+  } catch (error) {
+    console.error('Clustering error:', error);
+    res.render('error', {
+      title: 'Clustering Error',
+      message: `Error clustering issues: ${error.message}`,
+      error: error
+    });
   }
+});
+
+// Route for viewing epic details
+app.get('/epic/:owner/:name/:clusterId', async (req, res) => {
+  const { owner, name, clusterId } = req.params;
+  const repoKey = `${owner}/${name}`;
   
-  // Render the clusters view
-  res.render('clusters', {
-    title: `Issue Clusters - ${owner}/${name}`,
-    repoOwner: owner,
-    repoName: name,
-    issues: cachedClusters[repoKey].issues,
-    epics: cachedClusters[repoKey].epics,
-    references: cachedClusters[repoKey].references,
-    clusters: cachedClusters[repoKey].clusters
-  });
+  try {
+    // Check if we have cached clusters
+    if (!cachedIssues[repoKey] || !cachedClusters[repoKey]) {
+      return res.redirect(`/repository/${owner}/${name}`);
+    }
+    
+    // Get the cluster and epic data
+    const cluster = cachedClusters[repoKey].clusters[clusterId];
+    
+    if (!cluster || !cluster.epicIssue) {
+      throw new Error('Epic not found');
+    }
+    
+    // Render the epic detail view
+    res.render('epic_detail', {
+      title: `Epic: ${cluster.epicIssue.title}`,
+      repoOwner: owner,
+      repoName: name,
+      clusterId,
+      epic: cluster.epicIssue,
+      issues: cluster.issues,
+      getContrastColor: (hexcolor) => {
+        // Convert hex to RGB
+        const r = parseInt(hexcolor.substr(0, 2), 16);
+        const g = parseInt(hexcolor.substr(2, 2), 16);
+        const b = parseInt(hexcolor.substr(4, 2), 16);
+        // Calculate luminance
+        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        // Return black or white based on luminance
+        return luminance > 0.5 ? '#000000' : '#ffffff';
+      }
+    });
+  } catch (error) {
+    console.error('Epic detail error:', error);
+    res.render('error', {
+      title: 'Error Viewing Epic',
+      message: `Error viewing epic: ${error.message}`,
+      error: error
+    });
+  }
 });
 
 // Start the server
