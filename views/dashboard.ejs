@@ -1,0 +1,127 @@
+<div class="container">
+  <div class="row">
+    <div class="col-12">
+      <h1 class="mb-4">Your GitHub Repositories</h1>
+      
+      <% if (user) { %>
+        <div class="mb-4">
+          <div class="user-info d-flex align-items-center">
+            <img src="<%= user.avatar_url %>" alt="<%= user.login %>" class="rounded-circle me-3" style="width: 50px; height: 50px;">
+            <div>
+              <h5 class="mb-0"><%= user.name || user.login %></h5>
+              <small class="text-muted">@<%= user.login %></small>
+            </div>
+          </div>
+        </div>
+      <% } %>
+      
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header bg-primary text-white">
+              <h5 class="mb-0">Select a Repository to Analyze</h5>
+            </div>
+            <div class="card-body">
+              <p>Choose a repository to analyze its issues and create epic clusters:</p>
+              
+              <form action="/scrape" method="POST" class="mt-3">
+                <div class="mb-3">
+                  <label for="repoSelect" class="form-label">Repository:</label>
+                  <select name="repoUrl" id="repoSelect" class="form-select" required>
+                    <option value="">-- Select a repository --</option>
+                    <% repositories.forEach(repo => { %>
+                      <option value="<%= repo.html_url %>"><%= repo.full_name %></option>
+                    <% }); %>
+                  </select>
+                </div>
+                
+                <div class="mb-3">
+                  <label for="maxIssues" class="form-label">Max Issues to Analyze (0 for all):</label>
+                  <input type="number" name="maxIssues" id="maxIssues" class="form-control" value="100" min="0">
+                </div>
+                
+                <button type="submit" class="btn btn-primary">
+                  <i class="fas fa-search me-2"></i> Analyze Issues
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header bg-secondary text-white">
+              <h5 class="mb-0">Recently Analyzed Repositories</h5>
+            </div>
+            <div class="card-body">
+              <% if (Object.keys(locals.recentRepos || {}).length > 0) { %>
+                <ul class="list-group">
+                  <% Object.keys(locals.recentRepos || {}).forEach(repo => { %>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                      <span><%= repo %></span>
+                      <a href="/repository/<%= repo %>" class="btn btn-sm btn-outline-primary">View</a>
+                    </li>
+                  <% }); %>
+                </ul>
+              <% } else { %>
+                <p class="text-muted">No repositories have been analyzed yet.</p>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header bg-dark text-white">
+              <h5 class="mb-0">Your Repositories</h5>
+            </div>
+            <div class="card-body">
+              <% if (repositories && repositories.length > 0) { %>
+                <div class="table-responsive">
+                  <table class="table table-hover">
+                    <thead>
+                      <tr>
+                        <th>Repository</th>
+                        <th>Description</th>
+                        <th>Language</th>
+                        <th>Stars</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <% repositories.forEach(repo => { %>
+                        <tr>
+                          <td>
+                            <a href="<%= repo.html_url %>" target="_blank">
+                              <%= repo.name %>
+                            </a>
+                          </td>
+                          <td><%= repo.description || 'No description' %></td>
+                          <td><%= repo.language || 'N/A' %></td>
+                          <td><%= repo.stargazers_count %></td>
+                          <td>
+                            <form action="/scrape" method="POST" class="d-inline">
+                              <input type="hidden" name="repoUrl" value="<%= repo.html_url %>">
+                              <input type="hidden" name="maxIssues" value="100">
+                              <button type="submit" class="btn btn-sm btn-primary">
+                                Analyze
+                              </button>
+                            </form>
+                          </td>
+                        </tr>
+                      <% }); %>
+                    </tbody>
+                  </table>
+                </div>
+              <% } else { %>
+                <p class="text-center text-muted">No repositories found.</p>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

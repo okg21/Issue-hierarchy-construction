@@ -8,6 +8,11 @@ const session = require('express-session'); // For flash messages
 const scraper = require('./github_scraper');
 const clustering = require('./issue_clustering');
 
+// GitHub OAuth Configuration
+const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
+const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
+const CALLBACK_URL = process.env.CALLBACK_URL || 'http://localhost:3000/auth/github/callback';
+
 // Initialize express app
 const app = express();
 const port = process.env.PORT || 3000;
@@ -16,18 +21,24 @@ const port = process.env.PORT || 3000;
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// Session middleware for flash messages
+// Session middleware for flash messages and user authentication
 app.use(session({
   secret: 'github-issue-hierarchy-construction',
   resave: false,
   saveUninitialized: true,
-  cookie: { secure: false }
+  cookie: { secure: process.env.NODE_ENV === 'production' }
 }));
 
 // Flash message middleware
 app.use((req, res, next) => {
   res.locals.flashMessage = req.session.flashMessage;
   delete req.session.flashMessage;
+  next();
+});
+
+// Make user available to all views
+app.use((req, res, next) => {
+  res.locals.user = req.session.user || null;
   next();
 });
 
@@ -78,16 +89,154 @@ let cachedClusters = {};
 // Use environment variable for GitHub API token
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 
+// Authentication middleware
+const ensureAuthenticated = (req, res, next) => {
+  if (req.session.user && req.session.accessToken) {
+    return next();
+  }
+  req.session.returnTo = req.originalUrl;
+  req.session.flashMessage = {
+    type: 'warning',
+    text: 'Please log in with GitHub to access this page'
+  };
+  res.redirect('/login');
+};
+
 // Routes
 app.get('/', (req, res) => {
   res.render('index', { 
-    title: 'GitHub Issue Scraper',
+    title: 'GitHub Issue Hierarchy Construction',
     error: null,
     recentRepos: Object.keys(cachedIssues)
   });
 });
 
-app.post('/scrape', async (req, res) => {
+// Login page
+app.get('/login', (req, res) => {
+  res.render('login', {
+    title: 'Login with GitHub',
+    clientId: GITHUB_CLIENT_ID,
+    redirectUri: CALLBACK_URL
+  });
+});
+
+// GitHub OAuth routes
+app.get('/auth/github', (req, res) => {
+  const githubAuthUrl = 'https://github.com/login/oauth/authorize';
+  const scope = 'read:user repo'; // Permissions for user info and repos
+  
+  res.redirect(
+    `${githubAuthUrl}?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${CALLBACK_URL}&scope=${scope}`
+  );
+});
+
+app.get('/auth/github/callback', async (req, res) => {
+  const code = req.query.code;
+  
+  if (!code) {
+    req.session.flashMessage = {
+      type: 'danger',
+      text: 'Failed to get authorization code from GitHub'
+    };
+    return res.redirect('/login');
+  }
+  
+  try {
+    // Exchange code for access token
+    const tokenResponse = await axios.post(
+      'https://github.com/login/oauth/access_token',
+      {
+        client_id: GITHUB_CLIENT_ID,
+        client_secret: GITHUB_CLIENT_SECRET,
+        code: code,
+        redirect_uri: CALLBACK_URL
+      },
+      {
+        headers: {
+          Accept: 'application/json'
+        }
+      }
+    );
+    
+    const accessToken = tokenResponse.data.access_token;
+    
+    if (!accessToken) {
+      throw new Error('Failed to obtain access token');
+    }
+    
+    // Get user data with the token
+    const userResponse = await axios.get('https://api.github.com/user', {
+      headers: {
+        Authorization: `token ${accessToken}`,
+        Accept: 'application/json'
+      }
+    });
+    
+    // Store user data and token in session
+    req.session.user = userResponse.data;
+    req.session.accessToken = accessToken;
+    
+    // Redirect to the original page or dashboard
+    const returnTo = req.session.returnTo || '/dashboard';
+    delete req.session.returnTo;
+    
+    req.session.flashMessage = {
+      type: 'success',
+      text: `Welcome, ${userResponse.data.login}!`
+    };
+    
+    res.redirect(returnTo);
+  } catch (error) {
+    console.error('GitHub OAuth error:', error);
+    req.session.flashMessage = {
+      type: 'danger',
+      text: `Authentication failed: ${error.message}`
+    };
+    res.redirect('/login');
+  }
+});
+
+// Logout route
+app.get('/logout', (req, res) => {
+  req.session.destroy();
+  res.redirect('/');
+});
+
+// Dashboard - requires authentication
+app.get('/dashboard', ensureAuthenticated, async (req, res) => {
+  try {
+    // Fetch user's repositories
+    const reposResponse = await axios.get('https://api.github.com/user/repos', {
+      headers: {
+        Authorization: `token ${req.session.accessToken}`,
+        Accept: 'application/json'
+      },
+      params: {
+        sort: 'updated',
+        direction: 'desc',
+        per_page: 50
+      }
+    });
+    
+    res.render('dashboard', {
+      title: 'Your GitHub Repositories',
+      repositories: reposResponse.data
+    });
+  } catch (error) {
+    console.error('Error fetching repositories:', error);
+    req.session.flashMessage = {
+      type: 'danger',
+      text: `Failed to fetch repositories: ${error.message}`
+    };
+    res.render('dashboard', {
+      title: 'Your GitHub Repositories',
+      repositories: []
+    });
+  }
+});
+
+// Protected routes - require authentication
+app.post('/scrape', ensureAuthenticated, async (req, res) => {
   const repoUrl = req.body.repoUrl;
   let maxIssues = parseInt(req.body.maxIssues) || 0;
   
@@ -95,9 +244,18 @@ app.post('/scrape', async (req, res) => {
     // Parse GitHub URL to get owner and name
     const { owner, name } = scraper.parseGitHubUrl(repoUrl);
     
-    // Fetch issues from GitHub
+    // Fetch issues from GitHub using user's token
     console.log(`Scraping ${maxIssues > 0 ? maxIssues : 'all'} issues from ${owner}/${name}...`);
+    
+    // Use user's token instead of global token
+    const userToken = req.session.accessToken;
+    // Set the token temporarily for the scraping operation
+    process.env.GITHUB_TOKEN = userToken;
+    
     const issues = await scraper.fetchAllIssues(owner, name, maxIssues);
+    
+    // Reset the token to the original value
+    process.env.GITHUB_TOKEN = GITHUB_TOKEN;
     
     if (issues.length === 0) {
       return res.render('index', { 
@@ -113,13 +271,14 @@ app.post('/scrape', async (req, res) => {
     // Optional: Save to CSV
     const csvPath = await scraper.saveIssuesToCsv(processedIssues, name);
     
-    // Store in cache
+    // Store in cache with user info
     cachedIssues[`${owner}/${name}`] = {
       owner,
       name,
       issues: processedIssues,
       csvPath,
-      timestamp: new Date()
+      timestamp: new Date(),
+      userId: req.session.user.id // Store user ID to associate with this data
     };
     
     // Redirect to view issues
@@ -303,7 +462,7 @@ app.get('/epic/:owner/:name/:clusterId', async (req, res) => {
 });
 
 // Route for creating an epic on GitHub
-app.post('/create-epic/:owner/:name/:clusterId', async (req, res) => {
+app.post('/create-epic/:owner/:name/:clusterId', ensureAuthenticated, async (req, res) => {
   const { owner, name, clusterId } = req.params;
   const repoKey = `${owner}/${name}`;
   
@@ -341,13 +500,16 @@ app.post('/create-epic/:owner/:name/:clusterId', async (req, res) => {
       labels.push('epic');
     }
     
+    // Use the user's token instead of the global token
+    const userToken = req.session.accessToken;
+    
     // Create the GitHub API request using axios
     const response = await axios({
       method: 'post',
       url: `https://api.github.com/repos/${owner}/${name}/issues`,
       headers: {
         'Accept': 'application/vnd.github.v3+json',
-        'Authorization': `token ${GITHUB_TOKEN}`,  // Note: GitHub prefers 'token' prefix over 'Bearer'
+        'Authorization': `token ${userToken}`,  // Using user's token
         'X-GitHub-Api-Version': '2022-11-28',
         'User-Agent': 'Issue-Hierarchy-Construction-App'
       },
@@ -388,10 +550,10 @@ app.post('/create-epic/:owner/:name/:clusterId', async (req, res) => {
       
       switch (statusCode) {
         case 401:
-          errorMessage = 'GitHub API authentication failed. Check your token.';
+          errorMessage = 'GitHub API authentication failed. You may need to log in again.';
           break;
         case 403:
-          errorMessage = 'GitHub API permission denied. Your token needs issues:write permission.';
+          errorMessage = 'GitHub API permission denied. Your account needs permission to create issues in this repository.';
           break;
         case 404:
           errorMessage = 'Repository not found or API endpoint does not exist.';
@@ -417,4 +579,8 @@ app.post('/create-epic/:owner/:name/:clusterId', async (req, res) => {
 // Start the server
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
+  console.log(`GitHub OAuth Callback URL: ${CALLBACK_URL}`);
+  if (!GITHUB_CLIENT_ID || !GITHUB_CLIENT_SECRET) {
+    console.warn('Warning: GitHub OAuth credentials not configured. Set GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET environment variables.');
+  }
 }); 
