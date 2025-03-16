@@ -3,6 +3,8 @@ const path = require('path');
 const fs = require('fs');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
+const axios = require('axios'); // For HTTP requests
+const session = require('express-session'); // For flash messages
 const scraper = require('./github_scraper');
 const clustering = require('./issue_clustering');
 
@@ -13,6 +15,21 @@ const port = process.env.PORT || 3000;
 // Set up view engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+
+// Session middleware for flash messages
+app.use(session({
+  secret: 'github-issue-hierarchy-construction',
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: false }
+}));
+
+// Flash message middleware
+app.use((req, res, next) => {
+  res.locals.flashMessage = req.session.flashMessage;
+  delete req.session.flashMessage;
+  next();
+});
 
 // Custom renderer that uses layout
 app.use((req, res, next) => {
@@ -279,6 +296,126 @@ app.get('/epic/:owner/:name/:clusterId', async (req, res) => {
       message: `Error viewing epic: ${error.message}`,
       error: error
     });
+  }
+});
+
+// Route for creating an epic on GitHub
+app.post('/create-epic/:owner/:name/:clusterId', async (req, res) => {
+  const { owner, name, clusterId } = req.params;
+  const repoKey = `${owner}/${name}`;
+  
+  try {
+    // Check if we have cached clusters
+    if (!cachedIssues[repoKey] || !cachedClusters[repoKey]) {
+      return res.redirect(`/repository/${owner}/${name}`);
+    }
+    
+    // Get the cluster and epic data
+    const cluster = cachedClusters[repoKey].clusters[clusterId];
+    
+    if (!cluster || !cluster.epicIssue) {
+      throw new Error('Epic not found');
+    }
+    
+    const epicIssue = cluster.epicIssue;
+    const relatedIssues = cluster.issues;
+    
+    // Check if epic body already contains a "Related Issues" section in a case-insensitive manner
+    let issueBody = epicIssue.body;
+    
+    if (!issueBody.toLowerCase().includes("related issues") && !issueBody.toLowerCase().includes("## related issues")) {
+      // Only add our related issues section if it doesn't already exist
+      issueBody += '\n\n### Related Issues\n';
+      relatedIssues.forEach(issue => {
+        issueBody += `- #${issue.number}: ${issue.title}\n`;
+      });
+    }
+    
+    // Prepare labels array
+    const labels = epicIssue.labels ? epicIssue.labels.map(label => label.name) : [];
+    // Always add an "Epic" label if not present
+    if (!labels.includes('epic')) {
+      labels.push('epic');
+    }
+    
+    // Load GitHub API key from secrets
+    const secrets = JSON.parse(fs.readFileSync('secrets.json', 'utf8'));
+    const ACCESS_TOKEN = secrets.apiKey;
+    
+    if (!ACCESS_TOKEN) {
+      throw new Error('GitHub API token not found in secrets.json');
+    }
+    
+    // Create the GitHub API request using axios
+    const response = await axios({
+      method: 'post',
+      url: `https://api.github.com/repos/${owner}/${name}/issues`,
+      headers: {
+        'Accept': 'application/vnd.github.v3+json',
+        'Authorization': `token ${ACCESS_TOKEN}`,  // Note: GitHub prefers 'token' prefix over 'Bearer'
+        'X-GitHub-Api-Version': '2022-11-28',
+        'User-Agent': 'Issue-Hierarchy-Construction-App'
+      },
+      data: {
+        title: epicIssue.title,
+        body: issueBody,
+        labels: labels
+      }
+    });
+    
+    // Check response status
+    if (response.status !== 201) {
+      throw new Error(`Unexpected status code: ${response.status}`);
+    }
+    
+    const createdIssue = response.data;
+    
+    // Update the epic in our cache with the real issue number
+    cluster.epicIssue.githubIssueNumber = createdIssue.number;
+    cluster.epicIssue.githubIssueUrl = createdIssue.html_url;
+    
+    // Set flash message for success
+    req.session.flashMessage = {
+      type: 'success',
+      text: `Epic successfully created on GitHub as issue #${createdIssue.number}. <a href="${createdIssue.html_url}" target="_blank">View on GitHub</a>`
+    };
+    
+    res.redirect(`/epic/${owner}/${name}/${clusterId}`);
+  } catch (error) {
+    console.error('Error creating epic on GitHub:', error);
+    
+    // Provide more helpful error messages based on status code
+    let errorMessage = 'Error creating epic on GitHub';
+    
+    if (error.response) {
+      const statusCode = error.response.status;
+      const responseData = error.response.data;
+      
+      switch (statusCode) {
+        case 401:
+          errorMessage = 'GitHub API authentication failed. Check your token.';
+          break;
+        case 403:
+          errorMessage = 'GitHub API permission denied. Your token needs issues:write permission.';
+          break;
+        case 404:
+          errorMessage = 'Repository not found or API endpoint does not exist.';
+          break;
+        case 422:
+          errorMessage = 'Validation failed: ' + (responseData.message || 'Unknown error');
+          break;
+        default:
+          errorMessage = `GitHub API error (${statusCode}): ${responseData.message || 'Unknown error'}`;
+      }
+    }
+    
+    // Set flash message for error
+    req.session.flashMessage = {
+      type: 'danger',
+      text: errorMessage
+    };
+    
+    res.redirect(`/epic/${owner}/${name}/${clusterId}`);
   }
 });
 

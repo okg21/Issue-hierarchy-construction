@@ -128,156 +128,438 @@
         <h2 class="h4 mb-0"><i class="fas fa-project-diagram me-2"></i>Issue Relationship Graph</h2>
     </div>
     <div class="card-body">
-        <div id="graph-container" style="height: 500px; border: 1px solid #ccc; border-radius: 4px;"></div>
+        <div class="mb-2">
+            <button id="zoom-in" class="btn btn-sm btn-outline-secondary"><i class="fas fa-search-plus"></i> Zoom In</button>
+            <button id="zoom-out" class="btn btn-sm btn-outline-secondary"><i class="fas fa-search-minus"></i> Zoom Out</button>
+            <button id="reset-view" class="btn btn-sm btn-outline-secondary"><i class="fas fa-expand"></i> Reset View</button>
+            <div class="btn-group ms-2">
+                <button id="layout-default" class="btn btn-sm btn-outline-primary active">Default Layout</button>
+                <button id="layout-cluster" class="btn btn-sm btn-outline-primary">Cluster View</button>
+                <button id="layout-issues-only" class="btn btn-sm btn-outline-primary">Issues Only</button>
+            </div>
+        </div>
+        <div id="graph-container" style="height: 700px; border: 1px solid #ccc; border-radius: 4px;"></div>
     </div>
 </div>
 
-<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.25.0/cytoscape.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         try {
-            // Data for the graph visualization
-            const nodes = <%= JSON.stringify(issues.map(i => ({ 
-                id: i.number, 
-                title: i.title, 
-                cluster: i.cluster || 0,
-                state: i.state,
-                label: `#${i.number}`
-            }))) %>;
+            const issueNodes = [];
+            const issueEdges = [];
             
-            const links = [];
-            
-            // Create links based on references (safely)
+            // Process regular issues
             <% issues.forEach(issue => { %>
+                // Add node for issue
+                issueNodes.push({
+                    data: {
+                        id: 'issue-<%= issue.number %>',
+                        label: '#<%= issue.number %>',
+                        title: JSON.parse(JSON.stringify("<%= issue.title %>")),
+                        cluster: <%= issue.cluster || 0 %>,
+                        state: '<%= issue.state %>',
+                        isEpic: false
+                    }
+                });
+                
+                // Add edges for references
                 <% if (issue.references && issue.references.length > 0) { %>
                     <% issue.references.forEach(ref => { %>
                         // Only add link if the referenced issue exists
-                        if (<%= JSON.stringify(issues.map(i => i.number)) %>.includes(<%= ref %>)) {
-                            links.push({
-                                source: <%= issue.number %>,
-                                target: <%= ref %>,
-                                value: 1
+                        <% if (issues.some(i => i.number === ref)) { %>
+                            issueEdges.push({
+                                data: {
+                                    id: 'edge-<%= issue.number %>-<%= ref %>',
+                                    source: 'issue-<%= issue.number %>',
+                                    target: 'issue-<%= ref %>',
+                                    weight: 1,
+                                    isEpicEdge: false
+                                }
                             });
-                        }
+                        <% } %>
                     <% }); %>
                 <% } %>
             <% }); %>
             
-            // Add auto-generated epics to the graph
+            // Process epic issues
             <% Object.keys(clusters).forEach(clusterId => { %>
                 <% if (clusters[clusterId].epicIssue) { %>
-                    // Add the epic node
-                    nodes.push({
-                        id: 'epic-<%= clusterId %>',
-                        title: '<%= clusters[clusterId].epicIssue.title %>',
-                        cluster: <%= clusterId %>,
-                        state: 'OPEN',
-                        label: 'EPIC',
-                        isEpic: true
+                    // Add node for epic
+                    issueNodes.push({
+                        data: {
+                            id: 'epic-<%= clusterId %>',
+                            label: '<%= clusters[clusterId].epicIssue.title.substring(0, 20) %><%= clusters[clusterId].epicIssue.title.length > 20 ? "..." : "" %>',
+                            title: JSON.parse(JSON.stringify("<%= clusters[clusterId].epicIssue.title %>")),
+                            cluster: <%= clusterId %>,
+                            state: 'OPEN',
+                            isEpic: true
+                        }
                     });
                     
-                    // Add links from epic to its issues
+                    // Add edges from epic to its issues
                     <% clusters[clusterId].issues.forEach(issue => { %>
-                        links.push({
-                            source: 'epic-<%= clusterId %>',
-                            target: <%= issue.number %>,
-                            value: 2,
-                            isEpicLink: true
+                        issueEdges.push({
+                            data: {
+                                id: 'epic-edge-<%= clusterId %>-<%= issue.number %>',
+                                source: 'epic-<%= clusterId %>',
+                                target: 'issue-<%= issue.number %>',
+                                weight: 2,
+                                isEpicEdge: true
+                            }
                         });
                     <% }); %>
                 <% } %>
             <% }); %>
             
+            console.log('Cytoscape nodes:', issueNodes.length);
+            console.log('Cytoscape edges:', issueEdges.length);
+            
             // Only render graph if there are nodes
-            if (nodes.length > 0) {
-                // D3.js graph visualization
-                const width = document.getElementById('graph-container').offsetWidth;
-                const height = 500;
-                
-                const svg = d3.select('#graph-container')
-                    .append('svg')
-                    .attr('width', width)
-                    .attr('height', height);
-                    
-                // Color scale for clusters
-                const color = d3.scaleOrdinal(d3.schemeCategory10);
-                
-                // Create a force simulation
-                const simulation = d3.forceSimulation(nodes)
-                    .force('link', d3.forceLink(links).id(d => d.id).distance(100))
-                    .force('charge', d3.forceManyBody().strength(-300))
-                    .force('center', d3.forceCenter(width / 2, height / 2))
-                    .force('collide', d3.forceCollide().radius(d => d.isEpic ? 40 : 30));
-                    
-                // Create links
-                const link = svg.append('g')
-                    .selectAll('line')
-                    .data(links)
-                    .enter()
-                    .append('line')
-                    .attr('stroke', d => d.isEpicLink ? '#ff9900' : '#999')
-                    .attr('stroke-opacity', d => d.isEpicLink ? 0.9 : 0.6)
-                    .attr('stroke-width', d => Math.sqrt(d.value));
-                    
-                // Create nodes
-                const node = svg.append('g')
-                    .selectAll('g')
-                    .data(nodes)
-                    .enter()
-                    .append('g')
-                    .call(d3.drag()
-                        .on('start', dragstarted)
-                        .on('drag', dragged)
-                        .on('end', dragended));
-                        
-                // Add circles for each node
-                node.append('circle')
-                    .attr('r', d => d.isEpic ? 15 : 10)
-                    .attr('fill', d => d.isEpic ? '#ff9900' : color(d.cluster))
-                    .attr('stroke', '#fff')
-                    .attr('stroke-width', 1.5);
-                    
-                // Add labels for each node
-                node.append('text')
-                    .attr('dx', 12)
-                    .attr('dy', '.35em')
-                    .text(d => d.label)
-                    .style('font-size', d => d.isEpic ? '12px' : '10px')
-                    .style('font-weight', d => d.isEpic ? 'bold' : 'normal');
-                    
-                // Add titles for hover
-                node.append('title')
-                    .text(d => d.isEpic ? `Epic: ${d.title}` : `#${d.id}: ${d.title}`);
-                    
-                // Update positions on each tick
-                simulation.on('tick', () => {
-                    link
-                        .attr('x1', d => d.source.x)
-                        .attr('y1', d => d.source.y)
-                        .attr('x2', d => d.target.x)
-                        .attr('y2', d => d.target.y);
-                        
-                    node
-                        .attr('transform', d => `translate(${Math.max(10, Math.min(width - 10, d.x))}, ${Math.max(10, Math.min(height - 10, d.y))})`);
+            if (issueNodes.length > 0) {
+                // Initialize Cytoscape
+                const cy = cytoscape({
+                    container: document.getElementById('graph-container'),
+                    elements: {
+                        nodes: issueNodes,
+                        edges: issueEdges
+                    },
+                    minZoom: 0.2,
+                    maxZoom: 3,
+                    wheelSensitivity: 0.3,
+                    style: [
+                        {
+                            selector: 'node',
+                            style: {
+                                'label': 'data(label)',
+                                'text-valign': 'center',
+                                'text-halign': 'center',
+                                'background-color': function(ele) {
+                                    if (ele.data('isEpic')) {
+                                        return '#ff9900';
+                                    }
+                                    // Use different colors for different clusters
+                                    const colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', 
+                                                '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'];
+                                    return colors[ele.data('cluster') % colors.length];
+                                },
+                                'width': function(ele) {
+                                    return ele.data('isEpic') ? 60 : 25;
+                                },
+                                'height': function(ele) {
+                                    return ele.data('isEpic') ? 60 : 25;
+                                },
+                                'font-size': function(ele) {
+                                    return ele.data('isEpic') ? 12 : 10;
+                                },
+                                'text-wrap': 'wrap',
+                                'text-max-width': function(ele) {
+                                    return ele.data('isEpic') ? 120 : 60;
+                                },
+                                'font-weight': function(ele) {
+                                    return ele.data('isEpic') ? 'bold' : 'normal';
+                                },
+                                'color': '#fff',
+                                'text-outline-width': 2,
+                                'text-outline-color': function(ele) {
+                                    if (ele.data('isEpic')) {
+                                        return '#ff9900';
+                                    }
+                                    const colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', 
+                                                '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'];
+                                    return colors[ele.data('cluster') % colors.length];
+                                }
+                            }
+                        },
+                        {
+                            selector: 'edge',
+                            style: {
+                                'width': 'data(weight)',
+                                'line-color': function(ele) {
+                                    return ele.data('isEpicEdge') ? '#ff9900' : '#999';
+                                },
+                                'opacity': function(ele) {
+                                    return ele.data('isEpicEdge') ? 0.9 : 0.6;
+                                },
+                                'curve-style': 'bezier'
+                            }
+                        },
+                        {
+                            selector: '.highlighted',
+                            style: {
+                                'border-width': 3,
+                                'border-color': '#ff0000',
+                                'line-color': '#ff0000',
+                                'opacity': 1,
+                                'z-index': 9999
+                            }
+                        },
+                        {
+                            selector: '.being-dragged',
+                            style: {
+                                'border-width': 2,
+                                'border-color': '#00ff00',
+                                'line-color': '#00ff00',
+                                'opacity': 1,
+                                'z-index': 10000
+                            }
+                        },
+                        {
+                            selector: '.hidden',
+                            style: {
+                                'display': 'none'
+                            }
+                        }
+                    ],
+                    layout: {
+                        name: 'cose',
+                        animate: false,
+                        nodeOverlap: 30,
+                        idealEdgeLength: 150,
+                        nodeRepulsion: 10000,
+                        gravity: 0.4,
+                        numIter: 1500,
+                        initialTemp: 200,
+                        edgeElasticity: 100,
+                        nestingFactor: 1.2,
+                        padding: 30,
+                        randomize: false,
+                        componentSpacing: 80,
+                        fit: true,
+                        refresh: 10
+                    }
                 });
                 
-                // Drag functions
-                function dragstarted(event, d) {
-                    if (!event.active) simulation.alphaTarget(0.3).restart();
-                    d.fx = d.x;
-                    d.fy = d.y;
-                }
+                // Add tooltips for nodes
+                cy.nodes().on('mouseover', function(e) {
+                    const node = e.target;
+                    const title = node.data('title');
+                    const id = node.data('id');
+                    
+                    // Create tooltip div if it doesn't exist
+                    let tooltip = document.getElementById('cy-tooltip');
+                    if (!tooltip) {
+                        tooltip = document.createElement('div');
+                        tooltip.id = 'cy-tooltip';
+                        tooltip.style.position = 'absolute';
+                        tooltip.style.zIndex = 1000;
+                        tooltip.style.background = 'white';
+                        tooltip.style.padding = '5px 10px';
+                        tooltip.style.borderRadius = '3px';
+                        tooltip.style.boxShadow = '0 0 5px rgba(0,0,0,0.3)';
+                        tooltip.style.pointerEvents = 'none';
+                        document.body.appendChild(tooltip);
+                    }
+                    
+                    // Set tooltip content - simple version that works
+                    tooltip.innerHTML = node.data('isEpic') ? `Epic: ${title}` : `#${id.replace('issue-', '')}: ${title}`;
+                    
+                    // Position tooltip near mouse
+                    const containerBounds = document.getElementById('graph-container').getBoundingClientRect();
+                    const renderedPosition = node.renderedPosition();
+                    tooltip.style.left = (containerBounds.left + renderedPosition.x + 20) + 'px';
+                    tooltip.style.top = (containerBounds.top + renderedPosition.y - 30) + 'px';
+                    tooltip.style.display = 'block';
+                    
+                    // Highlight connected nodes when hovering on an epic
+                    if (node.data('isEpic')) {
+                        // Get all connected edges to this epic
+                        const connectedEdges = node.connectedEdges();
+                        const connectedIssues = connectedEdges.targets();
+                        
+                        // Highlight the connected issues
+                        connectedIssues.addClass('highlighted');
+                        connectedEdges.addClass('highlighted');
+                    }
+                });
                 
-                function dragged(event, d) {
-                    d.fx = event.x;
-                    d.fy = event.y;
-                }
+                cy.nodes().on('mouseout', function(e) {
+                    const tooltip = document.getElementById('cy-tooltip');
+                    if (tooltip) {
+                        tooltip.style.display = 'none';
+                    }
+                    
+                    // Remove highlighting
+                    cy.elements().removeClass('highlighted');
+                });
                 
-                function dragended(event, d) {
-                    if (!event.active) simulation.alphaTarget(0);
-                    d.fx = null;
-                    d.fy = null;
-                }
+                // Add click event to nodes
+                cy.nodes().on('click', function(e) {
+                    const node = e.target;
+                    const id = node.data('id');
+                    
+                    if (node.data('isEpic')) {
+                        const clusterId = id.replace('epic-', '');
+                        window.location.href = `/epic/<%= repoOwner %>/<%= repoName %>/${clusterId}`;
+                    } else {
+                        const issueNumber = id.replace('issue-', '');
+                        window.location.href = `/issue/<%= repoOwner %>/<%= repoName %>/${issueNumber}`;
+                    }
+                });
+                
+                // Custom drag behavior for epic nodes to move connected issues
+                cy.nodes().filter(node => node.data('isEpic')).on('grab', function(e) {
+                    const epicNode = e.target;
+                    const connectedEdges = epicNode.connectedEdges();
+                    const connectedIssues = connectedEdges.targets();
+                    
+                    epicNode.scratch('_connectedIssues', connectedIssues);
+                    epicNode.scratch('_initialPos', { x: epicNode.position('x'), y: epicNode.position('y') });
+                    epicNode.scratch('_originalPositions', {});
+                    
+                    // Store original positions of all connected issues relative to epic
+                    connectedIssues.forEach(issue => {
+                        epicNode.scratch('_originalPositions')[issue.id()] = {
+                            x: issue.position('x') - epicNode.position('x'),
+                            y: issue.position('y') - epicNode.position('y')
+                        };
+                    });
+                    
+                    // Highlight the epic and all its connected issues during drag
+                    epicNode.addClass('being-dragged');
+                    connectedIssues.addClass('being-dragged');
+                    connectedEdges.addClass('being-dragged');
+                });
+                
+                cy.nodes().filter(node => node.data('isEpic')).on('drag', function(e) {
+                    const epicNode = e.target;
+                    const connectedIssues = epicNode.scratch('_connectedIssues');
+                    const originalPositions = epicNode.scratch('_originalPositions');
+                    
+                    if (connectedIssues && originalPositions) {
+                        // Move each issue to maintain its relative position to the epic
+                        connectedIssues.forEach(issue => {
+                            const originalPos = originalPositions[issue.id()];
+                            if (originalPos) {
+                                issue.position({
+                                    x: epicNode.position('x') + originalPos.x,
+                                    y: epicNode.position('y') + originalPos.y
+                                });
+                            }
+                        });
+                    }
+                });
+                
+                cy.nodes().filter(node => node.data('isEpic')).on('free', function(e) {
+                    const epicNode = e.target;
+                    const connectedIssues = epicNode.scratch('_connectedIssues');
+                    const connectedEdges = epicNode.connectedEdges();
+                    
+                    // Remove highlighting
+                    epicNode.removeClass('being-dragged');
+                    if (connectedIssues) {
+                        connectedIssues.removeClass('being-dragged');
+                    }
+                    connectedEdges.removeClass('being-dragged');
+                });
+                
+                // Add zoom controls
+                document.getElementById('zoom-in').addEventListener('click', function() {
+                    cy.zoom({
+                        level: cy.zoom() * 1.2,
+                        renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 }
+                    });
+                });
+                
+                document.getElementById('zoom-out').addEventListener('click', function() {
+                    cy.zoom({
+                        level: cy.zoom() * 0.8,
+                        renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 }
+                    });
+                });
+                
+                document.getElementById('reset-view').addEventListener('click', function() {
+                    cy.fit();
+                    cy.center();
+                });
+                
+                // Add layout toggle controls
+                document.getElementById('layout-default').addEventListener('click', function() {
+                    this.classList.add('active');
+                    document.getElementById('layout-cluster').classList.remove('active');
+                    document.getElementById('layout-issues-only').classList.remove('active');
+                    
+                    // Show all nodes
+                    cy.nodes().removeClass('hidden');
+                    cy.edges().removeClass('hidden');
+                    
+                    cy.layout({
+                        name: 'cose',
+                        animate: true,
+                        animationDuration: 500,
+                        nodeOverlap: 30,
+                        idealEdgeLength: 150,
+                        nodeRepulsion: 10000,
+                        gravity: 0.4,
+                        numIter: 1500,
+                        padding: 30,
+                        fit: true
+                    }).run();
+                });
+                
+                document.getElementById('layout-cluster').addEventListener('click', function() {
+                    this.classList.add('active');
+                    document.getElementById('layout-default').classList.remove('active');
+                    document.getElementById('layout-issues-only').classList.remove('active');
+                    
+                    // Show all nodes
+                    cy.nodes().removeClass('hidden');
+                    cy.edges().removeClass('hidden');
+                    
+                    // Run layout organized by clusters
+                    cy.layout({
+                        name: 'cose',
+                        animate: true,
+                        animationDuration: 500,
+                        // Organize by clusters - epics first, then issues by their cluster
+                        positions: function(node) {
+                            // Calculate positions based on clusters
+                            const clusterId = node.data('cluster');
+                            const isEpic = node.data('isEpic');
+                            const angle = (clusterId / 9) * 2 * Math.PI;
+                            
+                            // Distance from center varies by epic/normal and cluster
+                            const distance = isEpic ? 100 : 250;
+                            
+                            return {
+                                x: 500 + distance * Math.cos(angle),
+                                y: 350 + distance * Math.sin(angle)
+                            };
+                        },
+                        fit: true,
+                        padding: 50
+                    }).run();
+                });
+                
+                document.getElementById('layout-issues-only').addEventListener('click', function() {
+                    this.classList.add('active');
+                    document.getElementById('layout-default').classList.remove('active');
+                    document.getElementById('layout-cluster').classList.remove('active');
+                    
+                    // Hide epic nodes and their edges
+                    const epicNodes = cy.nodes().filter(node => node.data('isEpic'));
+                    const epicEdges = cy.edges().filter(edge => edge.data('isEpicEdge'));
+                    
+                    epicNodes.addClass('hidden');
+                    epicEdges.addClass('hidden');
+                    
+                    // Show only direct issue relationships
+                    cy.layout({
+                        name: 'cose',
+                        animate: true,
+                        animationDuration: 500,
+                        nodeOverlap: 30,
+                        idealEdgeLength: 100,  // Shorter edge length for more compact layout
+                        nodeRepulsion: 5000,   // Less repulsion for direct relationships
+                        gravity: 0.5,          // More gravity for tighter grouping
+                        numIter: 1000,
+                        padding: 40,
+                        randomize: true,       // Start with fresh positions
+                        fit: true,
+                        // Only include nodes that aren't hidden
+                        eles: cy.elements().not('.hidden')
+                    }).run();
+                });
             } else {
                 // No nodes to display
                 document.getElementById('graph-container').innerHTML = 
@@ -285,8 +567,14 @@
             }
         } catch (error) {
             console.error('Error rendering graph:', error);
+            console.error('Error stack:', error.stack);
             document.getElementById('graph-container').innerHTML = 
-                '<div class="alert alert-danger m-4">Error displaying graph: ' + error.message + '</div>';
+                '<div class="alert alert-danger m-4">' +
+                '<h4 class="alert-heading">Error displaying graph:</h4>' +
+                '<p>' + error.message + '</p>' +
+                '<hr>' +
+                '<p class="mb-0">Check browser console for more details.</p>' +
+                '</div>';
         }
     });
 </script>

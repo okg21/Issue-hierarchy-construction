@@ -21,8 +21,13 @@ function extractIssueRef(text, repoOwner, repoName) {
   const issueUrlRegex = new RegExp('/' + repoOwner + '/' + repoName + '/issues/(\\d+)', 'g');
   const edgeRegex = new RegExp(repoOwner + '/' + repoName + '#(\\d+)', 'g');
   const taskRegex = /\[([xX]|\s)\]\s?#(\d+)/g;
+  const simpleHashtagRegex = /#(\d+)/g;  // Simple hashtag reference
 
-  let matches, issueNumbersHttp = new Set(), issueNumbersEdge = new Set(), issueNumbersHashtag = new Set();
+  let matches, 
+      issueNumbersHttp = new Set(), 
+      issueNumbersEdge = new Set(), 
+      issueNumbersHashtag = new Set(),
+      issueNumbersSimple = new Set();
 
   // Extract issues mentioned via URL
   while ((matches = issueUrlRegex.exec(text)) !== null) {
@@ -38,16 +43,27 @@ function extractIssueRef(text, repoOwner, repoName) {
   while ((matches = taskRegex.exec(text)) !== null) {
     issueNumbersHashtag.add(matches[2]);
   }
+  
+  // Extract simple hashtag references
+  while ((matches = simpleHashtagRegex.exec(text)) !== null) {
+    issueNumbersSimple.add(matches[1]);
+  }
 
   // Combine all sets
-  return new Set([...issueNumbersHttp, ...issueNumbersEdge, ...issueNumbersHashtag]);
+  return new Set([...issueNumbersHttp, ...issueNumbersEdge, ...issueNumbersHashtag, ...issueNumbersSimple]);
 }
 
 // Process the issues to extract references
 function processIssueReferences(issues, repoOwner, repoName) {
   issues.forEach(issue => {
     const references = extractIssueRef(issue.body, repoOwner, repoName);
-    issue.references = Array.from(references);
+    // Convert references to numbers to ensure consistent comparison
+    issue.references = Array.from(references).map(ref => parseInt(ref, 10));
+    
+    // Log for debugging
+    if (issue.references.length > 0) {
+      console.log(`Issue #${issue.number} references: ${issue.references.join(', ')}`);
+    }
   });
 
   return issues;
@@ -111,10 +127,28 @@ async function createEmbeddings(issues) {
 
 // Calculate optimal number of clusters using silhouette score
 function calculateOptimalClusters(embeddings, maxClusters = 10) {
+  // Edge case: if we have very few data points, don't try to create multiple clusters
+  if (embeddings.length <= 3) {
+    return 1; // Just one cluster for very small datasets
+  }
+  
+  // Determine range of k to test
+  const minK = 2; // Minimum is 2 clusters
+  const maxK = Math.min(
+    maxClusters, 
+    Math.floor(embeddings.length / 2), 
+    Math.max(2, Math.floor(Math.sqrt(embeddings.length)))
+  );
+  
+  // Edge case: if maxK < minK, return minK
+  if (maxK < minK) {
+    return minK;
+  }
+  
   let bestScore = -1;
-  let optimalK = 2;  // Start with minimum of 2 clusters
+  let optimalK = minK;
 
-  for (let k = 2; k <= Math.min(maxClusters, Math.floor(embeddings.length / 2)); k++) {
+  for (let k = minK; k <= maxK; k++) {
     const result = skmeans(embeddings, k);
     const score = calculateSilhouetteScore(embeddings, result.idxs);
     
@@ -129,13 +163,25 @@ function calculateOptimalClusters(embeddings, maxClusters = 10) {
 
 // Calculate silhouette score for clustering evaluation
 function calculateSilhouetteScore(data, labels) {
+  // Edge case: if all points are in the same cluster, return 0
+  const uniqueClusters = [...new Set(labels)];
+  if (uniqueClusters.length <= 1) {
+    return 0;
+  }
+  
   let totalScore = 0;
   
   for (let i = 0; i < data.length; i++) {
     const a = calculateIntraClusterDistance(data[i], data, labels, labels[i]);
     const b = calculateInterClusterDistance(data[i], data, labels, labels[i]);
-    const score = (b - a) / Math.max(a, b);
-    totalScore += score;
+    
+    // Prevent division by zero
+    if (Math.max(a, b) === 0) {
+      totalScore += 0;
+    } else {
+      const score = (b - a) / Math.max(a, b);
+      totalScore += score;
+    }
   }
   
   return totalScore / data.length;
@@ -152,7 +198,12 @@ function calculateIntraClusterDistance(point, data, labels, cluster) {
     }
   }
   
-  return count > 0 ? sum / count : 0;
+  // Edge case: if there are no other points in the cluster
+  if (count === 0) {
+    return 0;
+  }
+  
+  return sum / count;
 }
 
 function calculateInterClusterDistance(point, data, labels, cluster) {
@@ -184,6 +235,15 @@ function euclideanDistance(a, b) {
 // Perform k-means clustering with optimal k
 async function performClustering(issues, suggestedClusters = null) {
   if (issues.length === 0) return [];
+  
+  // Special case: If there are too few issues, just put them all in one cluster
+  if (issues.length <= 3) {
+    console.log(`Only ${issues.length} issues found - assigning all to the same cluster`);
+    issues.forEach(issue => {
+      issue.cluster = 0;  // All in cluster 0
+    });
+    return issues;
+  }
   
   // Extract embeddings as a 2D array
   const embeddings = issues.map(issue => issue.embedding);
@@ -347,6 +407,7 @@ Give newlines when necessary.`;
       createdAt: new Date().toISOString(),
       references: issues.map(issue => issue.number.toString())
     };
+    
   } catch (error) {
     console.error('Error generating epic with Claude:', error);
     console.error('Error details:', error.message);
@@ -473,6 +534,59 @@ function capitalizeFirstLetter(string) {
 // Main clustering function
 async function clusterIssues(issues, repoOwner, repoName, numClusters = null) {
   try {
+    console.log(`Starting clustering for ${issues.length} issues from ${repoOwner}/${repoName}`);
+    
+    // Edge case: If there are no issues, return an empty result
+    if (!issues || issues.length === 0) {
+      console.log('No issues to cluster');
+      return {
+        issues: [],
+        epics: [],
+        references: [],
+        clusters: {}
+      };
+    }
+    
+    // Edge case: If there are very few issues, put them all in one cluster
+    if (issues.length <= 3) {
+      console.log(`Only ${issues.length} issues found - creating a single cluster`);
+      const singleCluster = {
+        '0': {
+          issues: issues,
+          topTerms: ['issues'],
+          label: 'All Issues',
+          epicIssue: null
+        }
+      };
+      
+      // Ensure issues have cluster property set
+      issues.forEach(issue => {
+        issue.cluster = 0;
+      });
+      
+      // Generate epic for the single cluster
+      try {
+        const epicIssue = await generateEpicForCluster(
+          issues,
+          ['issues'], 
+          '0',
+          repoOwner,
+          repoName
+        );
+        singleCluster['0'].epicIssue = epicIssue;
+      } catch (epicError) {
+        console.error('Error generating epic for single cluster:', epicError);
+        singleCluster['0'].epicIssue = createFallbackEpic(issues, ['issues'], '0');
+      }
+      
+      return {
+        issues: issues,
+        epics: [],
+        references: [],
+        clusters: singleCluster
+      };
+    }
+    
     // Step 1: Process issue references
     const processedIssues = processIssueReferences(issues, repoOwner, repoName);
     
@@ -521,7 +635,15 @@ async function clusterIssues(issues, repoOwner, repoName, numClusters = null) {
     };
   } catch (error) {
     console.error('Error in clusterIssues:', error);
-    throw error;
+    console.error(error.stack);
+    
+    // Return a fallback response even in case of error
+    return {
+      issues: issues || [],
+      epics: [],
+      references: [],
+      clusters: {}
+    };
   }
 }
 
