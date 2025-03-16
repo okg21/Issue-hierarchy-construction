@@ -3,8 +3,24 @@
  * Using TensorFlow.js Universal Sentence Encoder for semantic embeddings
  */
 
-const tf = require('@tensorflow/tfjs-node');
-const use = require('@tensorflow-models/universal-sentence-encoder');
+// Add more robust initialization with fallback
+let tf, use;
+try {
+  tf = require('@tensorflow/tfjs-node');
+  use = require('@tensorflow-models/universal-sentence-encoder');
+  console.log('TensorFlow.js initialized successfully');
+} catch (error) {
+  console.error('Error initializing TensorFlow.js:', error.message);
+  // Create dummy functions for fallback
+  tf = {
+    tensor: (data) => ({ data }),
+    tensor2d: (data) => ({ data }),
+    variable: (data) => ({ data }),
+    layers: { dense: () => ({}) },
+    ready: () => Promise.resolve()
+  };
+}
+
 const natural = require('natural');
 const skmeans = require('skmeans');
 
@@ -103,26 +119,84 @@ function prepareDataForEmbedding(issues) {
 // Create embeddings using Universal Sentence Encoder
 async function createEmbeddings(issues) {
   try {
-    // Load the model
-    const model = await use.load();
-    
-    // Prepare text data
-    const texts = prepareDataForEmbedding(issues);
-    
-    // Generate embeddings
-    const embeddings = await model.embed(texts);
-    const embeddingArray = await embeddings.array();
-    
-    // Assign embeddings to issues
-    issues.forEach((issue, index) => {
-      issue.embedding = embeddingArray[index];
-    });
-    
-    return issues;
+    // First try to use TensorFlow.js Universal Sentence Encoder
+    try {
+      // Check if USE variable is defined
+      if (!use) {
+        throw new Error('Universal Sentence Encoder module is not properly initialized');
+      }
+      
+      // Load the model
+      const model = await use.load();
+      
+      // Prepare text data
+      const texts = prepareDataForEmbedding(issues);
+      
+      // Generate embeddings
+      const embeddings = await model.embed(texts);
+      const embeddingArray = await embeddings.array();
+      
+      // Assign embeddings to issues
+      issues.forEach((issue, index) => {
+        issue.embedding = embeddingArray[index];
+      });
+      
+      console.log('Successfully created embeddings using Universal Sentence Encoder');
+      return issues;
+    } catch (tfError) {
+      console.error('TensorFlow.js error creating embeddings:', tfError);
+      console.log('Falling back to simple text-based embeddings');
+      
+      // Fallback to simple text-based embeddings when TensorFlow fails
+      return createSimpleEmbeddings(issues);
+    }
   } catch (error) {
-    console.error('Error creating embeddings:', error);
-    throw error;
+    console.error('Error in embedding generation:', error);
+    // Final fallback - return issues with empty embeddings rather than failing
+    issues.forEach(issue => {
+      issue.embedding = new Array(512).fill(0); // Empty 512-dim vector
+    });
+    return issues;
   }
+}
+
+// Fallback function for when TensorFlow.js fails
+function createSimpleEmbeddings(issues) {
+  // Create a vocabulary of all words across all issues
+  const vocabulary = new Set();
+  const textData = prepareDataForEmbedding(issues);
+  
+  textData.forEach(text => {
+    const words = text.toLowerCase().split(/\W+/).filter(word => word.length > 2);
+    words.forEach(word => vocabulary.add(word));
+  });
+  
+  const vocabArray = Array.from(vocabulary);
+  const vocabSize = Math.min(vocabArray.length, 512); // Limit vocab size
+  
+  // For each issue, create a simple bag-of-words vector
+  issues.forEach((issue, index) => {
+    const text = textData[index].toLowerCase();
+    const vector = new Array(vocabSize).fill(0);
+    
+    for (let i = 0; i < vocabSize; i++) {
+      const word = vocabArray[i];
+      // Count word occurrences (can be improved with TF-IDF)
+      const regex = new RegExp(`\\b${word}\\b`, 'g');
+      const matches = text.match(regex);
+      if (matches) {
+        vector[i] = matches.length;
+      }
+    }
+    
+    // Normalize the vector
+    const magnitude = Math.sqrt(vector.reduce((sum, val) => sum + val * val, 0));
+    issue.embedding = magnitude === 0 
+      ? vector 
+      : vector.map(val => val / magnitude);
+  });
+  
+  return issues;
 }
 
 // Calculate optimal number of clusters using silhouette score
@@ -234,29 +308,65 @@ function euclideanDistance(a, b) {
 
 // Perform k-means clustering with optimal k
 async function performClustering(issues, suggestedClusters = null) {
-  if (issues.length === 0) return [];
-  
-  // Special case: If there are too few issues, just put them all in one cluster
-  if (issues.length <= 3) {
-    console.log(`Only ${issues.length} issues found - assigning all to the same cluster`);
-    issues.forEach(issue => {
-      issue.cluster = 0;  // All in cluster 0
-    });
-    return issues;
+  try {
+    if (issues.length === 0) return [];
+    
+    // Special case: If there are too few issues, just put them all in one cluster
+    if (issues.length <= 3) {
+      console.log(`Only ${issues.length} issues found - assigning all to the same cluster`);
+      issues.forEach(issue => {
+        issue.cluster = 0;  // All in cluster 0
+      });
+      return issues;
+    }
+    
+    // Extract embeddings as a 2D array
+    const embeddings = issues.map(issue => issue.embedding);
+    
+    // Validate embeddings - make sure they're all arrays of the same length
+    if (!embeddings.every(e => Array.isArray(e) && e.length === embeddings[0].length)) {
+      console.error('Invalid embeddings detected, using fallback grouping');
+      return performFallbackClustering(issues, suggestedClusters);
+    }
+    
+    // Calculate optimal number of clusters if not suggested
+    const numClusters = suggestedClusters || calculateOptimalClusters(embeddings);
+    
+    try {
+      // Run k-means algorithm
+      const result = skmeans(embeddings, numClusters);
+      
+      // Assign cluster IDs to issues
+      issues.forEach((issue, index) => {
+        issue.cluster = result.idxs[index];
+      });
+      
+      return issues;
+    } catch (clusteringError) {
+      console.error('Error during k-means clustering:', clusteringError);
+      return performFallbackClustering(issues, suggestedClusters);
+    }
+  } catch (error) {
+    console.error('Error in performClustering:', error);
+    return performFallbackClustering(issues, suggestedClusters);
   }
+}
+
+// Fallback clustering when k-means fails
+function performFallbackClustering(issues, suggestedClusters = null) {
+  console.log('Using fallback clustering method');
   
-  // Extract embeddings as a 2D array
-  const embeddings = issues.map(issue => issue.embedding);
+  // Determine number of clusters
+  const numClusters = suggestedClusters || 
+    Math.min(Math.max(2, Math.floor(Math.sqrt(issues.length / 2))), 5);
   
-  // Calculate optimal number of clusters if not suggested
-  const numClusters = suggestedClusters || calculateOptimalClusters(embeddings);
+  // Simple clustering based on issue creation time
+  issues.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
   
-  // Run k-means algorithm
-  const result = skmeans(embeddings, numClusters);
+  const issuesPerCluster = Math.ceil(issues.length / numClusters);
   
-  // Assign cluster IDs to issues
   issues.forEach((issue, index) => {
-    issue.cluster = result.idxs[index];
+    issue.cluster = Math.min(Math.floor(index / issuesPerCluster), numClusters - 1);
   });
   
   return issues;
