@@ -75,6 +75,9 @@ let cachedIssues = {};
 // In-memory cache for clustered issues
 let cachedClusters = {};
 
+// Use environment variable for GitHub API token
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+
 // Routes
 app.get('/', (req, res) => {
   res.render('index', { 
@@ -338,21 +341,13 @@ app.post('/create-epic/:owner/:name/:clusterId', async (req, res) => {
       labels.push('epic');
     }
     
-    // Load GitHub API key from secrets
-    const secrets = JSON.parse(fs.readFileSync('secrets.json', 'utf8'));
-    const ACCESS_TOKEN = secrets.apiKey;
-    
-    if (!ACCESS_TOKEN) {
-      throw new Error('GitHub API token not found in secrets.json');
-    }
-    
     // Create the GitHub API request using axios
     const response = await axios({
       method: 'post',
       url: `https://api.github.com/repos/${owner}/${name}/issues`,
       headers: {
         'Accept': 'application/vnd.github.v3+json',
-        'Authorization': `token ${ACCESS_TOKEN}`,  // Note: GitHub prefers 'token' prefix over 'Bearer'
+        'Authorization': `token ${GITHUB_TOKEN}`,  // Note: GitHub prefers 'token' prefix over 'Bearer'
         'X-GitHub-Api-Version': '2022-11-28',
         'User-Agent': 'Issue-Hierarchy-Construction-App'
       },

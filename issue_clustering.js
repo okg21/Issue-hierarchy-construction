@@ -318,16 +318,14 @@ function generateClusterSummaries(issues) {
   return clusters;
 }
 
+// Load Claude API key from environment variable
+const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY;
+
 // Generate an epic issue for a cluster using Claude API
 async function generateEpicForCluster(issues, topTerms, clusterId, repoOwner, repoName) {
   try {
-    // Load Claude API key from secrets.json
-    const fs = require('fs');
-    const secrets = JSON.parse(fs.readFileSync('secrets.json', 'utf8'));
-    const apiKey = secrets.claudeKey;
-    
-    if (!apiKey) {
-      console.error('Claude API key not found in secrets.json');
+    if (!CLAUDE_API_KEY) {
+      console.error('Claude API key not found in environment variables');
       return createFallbackEpic(issues, topTerms, clusterId);
     }
     
@@ -353,7 +351,7 @@ Give newlines when necessary.`;
     // Call Claude API using the official SDK
     const Anthropic = require('@anthropic-ai/sdk');
     const anthropic = new Anthropic({
-      apiKey: apiKey
+      apiKey: CLAUDE_API_KEY
     });
 
     const response = await anthropic.messages.create({

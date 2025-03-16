@@ -3,9 +3,8 @@ const path = require('path');
 const axios = require('axios');
 const { createObjectCsvWriter } = require('csv-writer');
 
-// Read API key from secrets.json
-const secrets = JSON.parse(fs.readFileSync('secrets.json', 'utf8'));
-const ACCESS_TOKEN = secrets.apiKey;
+// Read API key from environment variable
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 
 // GitHub GraphQL URL
 const GITHUB_GRAPHQL_URL = 'https://api.github.com/graphql';
@@ -62,7 +61,7 @@ query ($repoOwner: String!, $repoName: String!, $cursor: String) {
 // Function to run GraphQL query
 async function runQuery(query, variables) {
   const headers = {
-    'Authorization': `Bearer ${ACCESS_TOKEN}`,
+    'Authorization': `Bearer ${GITHUB_TOKEN}`,
     'Content-Type': 'application/json'
   };
 
