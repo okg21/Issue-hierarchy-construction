@@ -21,12 +21,19 @@ const port = process.env.PORT || 3000;
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// Session middleware for flash messages and user authentication
+// Determine if we're in production based on environment
+const isProduction = process.env.NODE_ENV === 'production';
+const useSecureCookies = isProduction && process.env.ENABLE_HTTPS === 'true';
+
+// Use a more robust session configuration
 app.use(session({
   secret: 'github-issue-hierarchy-construction',
-  resave: false,
-  saveUninitialized: true,
-  cookie: { secure: process.env.NODE_ENV === 'production' }
+  resave: true,                // Force save session even if unmodified
+  saveUninitialized: true,     // Save new sessions
+  cookie: { 
+    secure: useSecureCookies,  // Only use secure cookies in production with HTTPS
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
 }));
 
 // Flash message middleware
@@ -91,9 +98,17 @@ const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 
 // Authentication middleware
 const ensureAuthenticated = (req, res, next) => {
+  console.log('AUTH: Checking authentication');
+  console.log('AUTH: Session data:', JSON.stringify(req.session));
+  console.log('AUTH: User in session?', req.session.user ? 'YES' : 'NO');
+  console.log('AUTH: Access token in session?', req.session.accessToken ? 'YES' : 'NO');
+  
   if (req.session.user && req.session.accessToken) {
+    console.log('AUTH: User is authenticated, proceeding');
     return next();
   }
+  
+  console.log('AUTH: User is NOT authenticated, redirecting to login');
   req.session.returnTo = req.originalUrl;
   req.session.flashMessage = {
     type: 'warning',
@@ -131,6 +146,7 @@ app.get('/auth/github', (req, res) => {
 });
 
 app.get('/auth/github/callback', async (req, res) => {
+  console.log('CALLBACK: Starting GitHub OAuth callback');
   const code = req.query.code;
   
   if (!code) {
@@ -172,20 +188,41 @@ app.get('/auth/github/callback', async (req, res) => {
       }
     });
     
-    // Store user data and token in session
+    console.log('CALLBACK: User authenticated:', userResponse.data.login);
+    console.log('CALLBACK: Setting session data');
+    
+    // Add this to inspect the session
+    console.log('CALLBACK: Session before setting user:', JSON.stringify(req.session));
+    
+    // Set session data
     req.session.user = userResponse.data;
     req.session.accessToken = accessToken;
     
-    // Redirect to the original page or dashboard
-    const returnTo = req.session.returnTo || '/dashboard';
-    delete req.session.returnTo;
+    // After setting session
+    console.log('CALLBACK: Session after setting user:', JSON.stringify(req.session));
     
-    req.session.flashMessage = {
-      type: 'success',
-      text: `Welcome, ${userResponse.data.login}!`
-    };
+    // Test if the session data is immediately available
+    console.log('CALLBACK: User in session?', req.session.user ? 'YES' : 'NO');
     
-    res.redirect(returnTo);
+    // Explicitly save and wait for completion
+    req.session.save((err) => {
+      if (err) {
+        console.error('CALLBACK: Session save error:', err);
+      } else {
+        console.log('CALLBACK: Session explicitly saved');
+      }
+      
+      // Redirect to the original page or dashboard
+      const returnTo = req.session.returnTo || '/dashboard';
+      delete req.session.returnTo;
+      
+      req.session.flashMessage = {
+        type: 'success',
+        text: `Welcome, ${userResponse.data.login}!`
+      };
+      
+      res.redirect(returnTo);
+    });
   } catch (error) {
     console.error('GitHub OAuth error:', error);
     req.session.flashMessage = {
@@ -204,6 +241,10 @@ app.get('/logout', (req, res) => {
 
 // Dashboard - requires authentication
 app.get('/dashboard', ensureAuthenticated, async (req, res) => {
+  console.log('DASHBOARD: Request received');
+  console.log('DASHBOARD: Session data:', JSON.stringify(req.session));
+  console.log('DASHBOARD: User in session?', req.session.user ? 'YES' : 'NO');
+  
   try {
     // Fetch user's repositories
     const reposResponse = await axios.get('https://api.github.com/user/repos', {
