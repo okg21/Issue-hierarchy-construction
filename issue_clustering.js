@@ -6,9 +6,52 @@
 // Add more robust initialization with fallback
 let tf, use;
 try {
+  // First, patch the util functions before loading TensorFlow
+  try {
+    // Add a polyfill for isNullOrUndefined to the global scope
+    // Some Node.js versions removed this utility function
+    if (!global.isNullOrUndefined) {
+      global.isNullOrUndefined = function(value) {
+        return value === null || value === undefined;
+      };
+    }
+    
+    // Try to directly patch the util module
+    const utilPath = require.resolve('util');
+    const util = require(utilPath);
+    if (typeof util.isNullOrUndefined !== 'function') {
+      util.isNullOrUndefined = function(value) {
+        return value === null || value === undefined;
+      };
+      console.log('Added polyfill for util.isNullOrUndefined');
+    }
+  } catch (patchError) {
+    console.error('Error patching util module:', patchError.message);
+  }
+  
+  // Now load TensorFlow.js modules
   tf = require('@tensorflow/tfjs-node');
   use = require('@tensorflow-models/universal-sentence-encoder');
   console.log('TensorFlow.js initialized successfully');
+  
+  // Add polyfill for the missing isNullOrUndefined function
+  // This fixes the issue in Render environment
+  try {
+    const tfNodeBackend = require('@tensorflow/tfjs-node/dist/nodejs_kernel_backend');
+    const tfNodeKernels = require('@tensorflow/tfjs-node/dist/kernels/StridedSlice');
+    const util = require('util');
+    
+    // Check if the function is missing and add it if needed
+    if (typeof util.isNullOrUndefined !== 'function') {
+      util.isNullOrUndefined = function(value) {
+        return value === null || value === undefined;
+      };
+      
+      console.log('Added polyfill for isNullOrUndefined function');
+    }
+  } catch (polyfillError) {
+    console.error('Error adding polyfill:', polyfillError.message);
+  }
 } catch (error) {
   console.error('Error initializing TensorFlow.js:', error.message);
   // Create dummy functions for fallback
