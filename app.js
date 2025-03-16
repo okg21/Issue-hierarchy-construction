@@ -98,17 +98,10 @@ const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 
 // Authentication middleware
 const ensureAuthenticated = (req, res, next) => {
-  console.log('AUTH: Checking authentication');
-  console.log('AUTH: Session data:', JSON.stringify(req.session));
-  console.log('AUTH: User in session?', req.session.user ? 'YES' : 'NO');
-  console.log('AUTH: Access token in session?', req.session.accessToken ? 'YES' : 'NO');
-  
   if (req.session.user && req.session.accessToken) {
-    console.log('AUTH: User is authenticated, proceeding');
     return next();
   }
   
-  console.log('AUTH: User is NOT authenticated, redirecting to login');
   req.session.returnTo = req.originalUrl;
   req.session.flashMessage = {
     type: 'warning',
@@ -146,7 +139,6 @@ app.get('/auth/github', (req, res) => {
 });
 
 app.get('/auth/github/callback', async (req, res) => {
-  console.log('CALLBACK: Starting GitHub OAuth callback');
   const code = req.query.code;
   
   if (!code) {
@@ -188,28 +180,14 @@ app.get('/auth/github/callback', async (req, res) => {
       }
     });
     
-    console.log('CALLBACK: User authenticated:', userResponse.data.login);
-    console.log('CALLBACK: Setting session data');
-    
-    // Add this to inspect the session
-    console.log('CALLBACK: Session before setting user:', JSON.stringify(req.session));
-    
     // Set session data
     req.session.user = userResponse.data;
     req.session.accessToken = accessToken;
     
-    // After setting session
-    console.log('CALLBACK: Session after setting user:', JSON.stringify(req.session));
-    
-    // Test if the session data is immediately available
-    console.log('CALLBACK: User in session?', req.session.user ? 'YES' : 'NO');
-    
     // Explicitly save and wait for completion
     req.session.save((err) => {
       if (err) {
-        console.error('CALLBACK: Session save error:', err);
-      } else {
-        console.log('CALLBACK: Session explicitly saved');
+        console.error('Session save error:', err);
       }
       
       // Redirect to the original page or dashboard
@@ -241,10 +219,6 @@ app.get('/logout', (req, res) => {
 
 // Dashboard - requires authentication
 app.get('/dashboard', ensureAuthenticated, async (req, res) => {
-  console.log('DASHBOARD: Request received');
-  console.log('DASHBOARD: Session data:', JSON.stringify(req.session));
-  console.log('DASHBOARD: User in session?', req.session.user ? 'YES' : 'NO');
-  
   try {
     // Fetch user's repositories
     const reposResponse = await axios.get('https://api.github.com/user/repos', {

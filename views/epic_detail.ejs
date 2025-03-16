@@ -1,14 +1,6 @@
 <%- include('partials/header.ejs') %>
 
 <div class="container-fluid mt-4">
-    <!-- Flash message display -->
-    <% if (locals.flashMessage) { %>
-        <div class="alert alert-<%= flashMessage.type %> alert-dismissible fade show" role="alert">
-            <%= flashMessage.text %>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    <% } %>
-
     <div class="row mb-4">
         <div class="col-md-8">
             <h1><i class="fas fa-bookmark me-2"></i><%= epic.title %></h1>
